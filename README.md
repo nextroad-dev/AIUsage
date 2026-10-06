@@ -38,7 +38,7 @@ Expo Go 可以运行本应用，但不含原生扩展：浏览器登录回调、
 
 ## 打包
 
-两个 GitHub Actions 工作流都可以在 Actions 页面点 *Run workflow* 手动触发，或推送 `v*` 标签（如 `v1.0.1`）自动触发，完成后在运行页面底部下载产物。
+两个 GitHub Actions 工作流都可以在 Actions 页面点 *Run workflow* 手动触发（在运行页面底部下载产物），或推送 `v*` 标签（如 `v1.0.1`）自动触发：标签构建会自动发布到 [Releases](https://github.com/nextroad-dev/aiusage/releases)，同时附上 APK 和 IPA。
 
 ### iOS 无签名 IPA（无需 Apple 开发者账号）
 
