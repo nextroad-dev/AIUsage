@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -28,6 +28,8 @@ import { haptics } from '@/ui/haptics';
 import { MeterRow } from '@/ui/meter-row';
 import { unlimitedKeyHint } from '@/ui/relay-hints';
 import { RefreshButton } from '@/ui/refresh-button';
+import { RefreshNotice } from '@/ui/refresh-notice';
+import { summarizeOutcomes, type RefreshSummary } from '@/data/refresh-summary';
 import { enterFade, enterItem, exitFade, layoutShift } from '@/ui/motion';
 import { ProviderIcon } from '@/ui/provider-icon';
 import { StatusBadge } from '@/ui/status-badge';
@@ -133,6 +135,8 @@ export default function AccountDetailScreen() {
   const now = useNow();
   const view = useAccountView(accountId);
   const refresh = useRefreshAccount(accountId);
+  const [notice, setNotice] = useState<RefreshSummary>();
+  const closeNotice = useCallback(() => setNotice(undefined), []);
   const actions = useAccountActions();
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState('');
@@ -175,10 +179,24 @@ export default function AccountDetailScreen() {
     setRenaming(false);
   };
 
+  // a manual refresh reports its outcome; the pull-to-refresh spinner already shows progress
+  const refreshNow = () => {
+    setNotice(undefined);
+    refresh.mutate(undefined, {
+      onSuccess: (outcome) => {
+        const s = summarizeOutcomes({ [accountId]: outcome }, [v]);
+        if (s.kind === 'ok' && s.updated === 0) return;
+        if (s.kind === 'ok') haptics.success();
+        else haptics.warning();
+        setNotice(s);
+      },
+    });
+  };
+
   return (
     <Screen
       safeTop={false}
-      onRefresh={v.source === 'auto' ? () => refresh.mutate() : undefined}
+      onRefresh={v.source === 'auto' ? refreshNow : undefined}
       refreshing={refresh.isPending}
     >
       <Stack.Screen
@@ -186,12 +204,12 @@ export default function AccountDetailScreen() {
           title: t('Details'),
           headerRight:
             v.source === 'auto'
-              ? () => (
-                  <RefreshButton refreshing={refresh.isPending} onPress={() => refresh.mutate()} />
-                )
+              ? () => <RefreshButton refreshing={refresh.isPending} onPress={refreshNow} />
               : undefined,
         }}
       />
+
+      {notice ? <RefreshNotice summary={notice} onClose={closeNotice} /> : null}
 
       <Band entering={enterFade} layout={layoutShift}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.three }}>

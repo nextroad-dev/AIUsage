@@ -36,6 +36,13 @@ export const zh: Record<string, string> = {
     '账号、凭据和用量历史只保存在这台设备上，不会发送到我们的任何服务器。',
   // API relays
   'API relay': '中转站',
+  'Updated 1 account': '已刷新 1 个账号',
+  'Updated {n} accounts': '已刷新 {n} 个账号',
+  '1 account could not be refreshed': '1 个账号刷新失败',
+  '{n} accounts could not be refreshed': '{n} 个账号刷新失败',
+  'Refresh took too long. Some accounts may update a little later.':
+    '刷新超时，部分账号可能稍后才会更新。',
+  Dismiss: '关闭',
   Subscriptions: '订阅套餐',
   'Open platforms': '开放平台',
   Relays: '中转站',

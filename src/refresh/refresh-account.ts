@@ -83,7 +83,11 @@ export async function refreshAccount(
         message: 'The response was not recognized. The service may have changed.',
         countsAsFailure: false,
       });
-      return { type: 'failed', kind: 'unsupported', message: 'unsupported' };
+      return {
+        type: 'failed',
+        kind: 'unsupported',
+        message: 'The response was not recognized. The service may have changed.',
+      };
     }
     await repos.snapshots.save(snapshot);
     await repos.health.recordSuccess(accountId, nowMs);

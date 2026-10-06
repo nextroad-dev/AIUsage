@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Animated from 'react-native-reanimated';
 
 import { Band } from '@/components/section';
@@ -18,6 +18,9 @@ import { Button } from '@/ui/controls';
 import { RefreshButton } from '@/ui/refresh-button';
 import { UpdatePill } from '@/ui/update-pill';
 import { useUpdateNotice } from '@/data/update-check';
+import { summarizeCycle, type RefreshSummary } from '@/data/refresh-summary';
+import { haptics } from '@/ui/haptics';
+import { RefreshNotice } from '@/ui/refresh-notice';
 import { enterFade, enterItem, exitFade, layoutShift } from '@/ui/motion';
 
 export default function OverviewScreen() {
@@ -29,6 +32,25 @@ export default function OverviewScreen() {
   const views = useAccountViews();
   const refresh = useRefreshAll();
   const update = useUpdateNotice();
+  const [notice, setNotice] = useState<RefreshSummary>();
+  const closeNotice = useCallback(() => setNotice(undefined), []);
+
+  // the refresh button reports what it did; the automatic refresh on open stays silent
+  const refreshNow = () => {
+    setNotice(undefined);
+    refresh.mutate(
+      { force: true },
+      {
+        onSuccess: (result) => {
+          const s = summarizeCycle(result, views.data ?? []);
+          if (s.kind === 'ok' && s.updated === 0) return;
+          if (s.kind === 'ok') haptics.success();
+          else haptics.warning();
+          setNotice(s);
+        },
+      },
+    );
+  };
 
   // Refresh once when the app opens; the rate limiter makes this cheap if data is recent.
   const ready = !!services.data;
@@ -52,13 +74,10 @@ export default function OverviewScreen() {
             <UpdatePill release={update.notice} onDismiss={update.dismiss} />
           ) : undefined
         }
-        action={
-          <RefreshButton
-            refreshing={refresh.isPending}
-            onPress={() => refresh.mutate({ force: true })}
-          />
-        }
+        action={<RefreshButton refreshing={refresh.isPending} onPress={refreshNow} />}
       />
+
+      {notice ? <RefreshNotice summary={notice} onClose={closeNotice} /> : null}
 
       {services.error || views.error ? (
         <Band entering={enterFade} exiting={exitFade} layout={layoutShift}>

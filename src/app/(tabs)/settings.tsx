@@ -137,7 +137,6 @@ export default function SettingsScreen() {
 
       <Animated.View layout={layoutShift}>
         <Section title={t('About')}>
-          <Row title={t('Version {version}', { version: Constants.expoConfig?.version ?? '—' })} />
           <Row
             title="GitHub"
             value={GITHUB_HANDLE}
@@ -156,6 +155,15 @@ export default function SettingsScreen() {
           ) : null}
         </Section>
       </Animated.View>
+
+      {/* the build, quietly at the very end of the page */}
+      <ThemedText
+        type="small"
+        themeColor="textSecondary"
+        style={{ textAlign: 'center', marginTop: Spacing.two }}
+      >
+        {`AI Usage ${t('Version {version}', { version: Constants.expoConfig?.version ?? '—' })}`}
+      </ThemedText>
     </Screen>
   );
 }
