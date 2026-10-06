@@ -68,20 +68,19 @@ export default function OverviewScreen() {
         </Band>
       ) : null}
 
-      {list.length > 0 ? (
+      {/* the summary appears only with something to say: a priced plan or an upcoming plan end */}
+      {totals.length > 0 || renewal ? (
         <Band entering={enterFade} layout={layoutShift} style={{ gap: Spacing.one }}>
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('Subscriptions per month')}
-          </ThemedText>
           {totals.length > 0 ? (
-            <ThemedText type="subtitle">
-              {totals.map(([currency, sum]) => formatAmount(sum, currency)).join(' + ')}
-            </ThemedText>
-          ) : (
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('Add monthly prices in account details to see your total.')}
-            </ThemedText>
-          )}
+            <>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('Subscriptions per month')}
+              </ThemedText>
+              <ThemedText type="subtitle">
+                {totals.map(([currency, sum]) => formatAmount(sum, currency)).join(' + ')}
+              </ThemedText>
+            </>
+          ) : null}
           {renewal ? (
             <ThemedText type="small" themeColor="textSecondary">
               {t('Next plan end: {name} · {date}', {

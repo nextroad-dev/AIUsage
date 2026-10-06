@@ -36,6 +36,10 @@ export const zh: Record<string, string> = {
     '账号、凭据和用量历史只保存在这台设备上，不会发送到我们的任何服务器。',
   // API relays
   'API relay': '中转站',
+  Subscriptions: '订阅套餐',
+  'Open platforms': '开放平台',
+  Relays: '中转站',
+  Other: '其他',
   'New v{version}': '新版本 v{version}',
   'New version {version} available': '有新版本 {version}',
   'Dismiss this version': '不再提示此版本',
@@ -353,7 +357,6 @@ export const zh: Record<string, string> = {
   '{name}: {meter} has reset': '{name}：{meter}已重置',
   'The quota is available again.': '额度已恢复，可以继续使用。',
   'Subscriptions per month': '每月订阅合计',
-  'Add monthly prices in account details to see your total.': '在账号详情中填写月费即可查看合计。',
   'Next plan end: {name} · {date}': '最近到期：{name} · {date}',
   'Tell me when a window resets': '窗口重置时通知我',
   'Only for windows that were nearly used up.': '仅限即将用完的窗口。',

@@ -9,14 +9,12 @@ import { Row, Section } from '@/components/section';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
-import { useAccountViews, useAlertSettings } from '@/data/hooks';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
 import { usePreferences } from '@/providers/preferences';
 import { Button } from '@/ui/controls';
 import { haptics } from '@/ui/haptics';
 import { enterFade, enterItem, exitFade, layoutShift, PressableScale } from '@/ui/motion';
-import { ACCENT_LABELS } from '@/ui/settings-labels';
 
 const GITHUB_HANDLE = 'nextroad-dev';
 const GITHUB_URL = 'https://github.com/nextroad-dev';
@@ -41,49 +39,27 @@ function MenuIcon({ name }: { name: SymbolViewProps['name'] }) {
   );
 }
 
-/**
- * Settings hub: each area opens its own page, and the row shows its current state so most visits
- * need no tap at all.
- */
+/** Settings hub: each area opens its own page; the hub itself stays a short, quiet list. */
 export default function SettingsScreen() {
   const router = useRouter();
   const t = useT();
   const theme = useTheme();
-  const accounts = useAccountViews();
-  const { settings } = useAlertSettings();
-  const { localeSetting, themeSetting, accentSetting, sponsorDismissed, setSponsorDismissed } =
-    usePreferences();
+  const { sponsorDismissed, setSponsorDismissed } = usePreferences();
 
-  const language =
-    localeSetting === 'system'
-      ? t('Follow system')
-      : localeSetting === 'zh'
-        ? t('Chinese')
-        : t('English');
-  const appearance =
-    themeSetting === 'system'
-      ? t('Follow system')
-      : themeSetting === 'light'
-        ? t('Light')
-        : t('Dark');
-
-  const menu: { icon: SymbolViewProps['name']; title: string; value?: string; href: Href }[] = [
+  const menu: { icon: SymbolViewProps['name']; title: string; href: Href }[] = [
     {
       icon: { ios: 'paintbrush.fill', android: 'palette', web: 'palette' },
       title: t('Language & appearance'),
-      value: `${language} · ${appearance} · ${t(ACCENT_LABELS[accentSetting])}`,
       href: '/settings/appearance',
     },
     {
       icon: { ios: 'person.2.fill', android: 'group', web: 'group' },
       title: t('Accounts'),
-      value: accounts.data ? String(accounts.data.length) : undefined,
       href: '/settings/accounts',
     },
     {
       icon: { ios: 'bell.fill', android: 'notifications', web: 'notifications' },
       title: t('Alerts'),
-      value: settings.enabled ? t('On') : t('Off'),
       href: '/settings/alerts',
     },
     {
@@ -152,7 +128,6 @@ export default function SettingsScreen() {
               <Row
                 leading={<MenuIcon name={m.icon} />}
                 title={m.title}
-                value={m.value}
                 onPress={() => router.push(m.href)}
               />
             </Animated.View>
