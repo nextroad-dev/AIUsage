@@ -1,6 +1,8 @@
 import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
+import { Linking, Platform } from 'react-native';
 
+import { beginCallbackWait } from '@/authkit/callback-session';
 import { LoopbackUnavailableError, startLoopback, stopLoopback } from '@/authkit/loopback';
 import type { Credential } from '@/core/types';
 
@@ -45,7 +47,10 @@ export const browserAuthorizeDeps: BrowserAuthorizeDeps = {
     }),
   startLoopback,
   stopLoopback,
-  openAuthSession: (url, redirectUrl) => WebBrowser.openAuthSessionAsync(url, redirectUrl),
+  openAuthSession: (url, redirectUrl) =>
+    Platform.OS === 'android'
+      ? openAuthSessionAndroid(url, redirectUrl)
+      : WebBrowser.openAuthSessionAsync(url, redirectUrl),
   dismissAuthSession: () => {
     try {
       WebBrowser.dismissAuthSession();
@@ -54,6 +59,54 @@ export const browserAuthorizeDeps: BrowserAuthorizeDeps = {
     }
   },
 };
+
+/** How long to keep listening for the callback link after Android reports the browser closed. */
+export const ANDROID_LATE_CALLBACK_MS = 1500;
+
+/**
+ * Android has no system authorization session: expo-web-browser opens a Custom Tab and races the
+ * app link against the app becoming active again. Returning through the callback triggers both,
+ * and when "active" wins the session reads as dismissed although the link is on its way. A second
+ * listener started before the browser opens catches that late link, so a completed sign-in is
+ * never reported as cancelled.
+ */
+export async function openAuthSessionAndroid(
+  url: string,
+  redirectUrl: string,
+  deps: {
+    open: (url: string, redirectUrl: string) => Promise<{ type: string; url?: string }>;
+    addUrlListener: (fn: (e: { url: string }) => void) => { remove(): void };
+    lateMs: number;
+  } = {
+    open: (u, r) => WebBrowser.openAuthSessionAsync(u, r),
+    addUrlListener: (fn) => Linking.addEventListener('url', fn),
+    lateMs: ANDROID_LATE_CALLBACK_MS,
+  },
+): Promise<{ type: string; url?: string }> {
+  let caught: string | undefined;
+  let onCaught: (() => void) | undefined;
+  const sub = deps.addUrlListener(({ url: link }) => {
+    if (!link.startsWith(redirectUrl)) return;
+    caught = link;
+    onCaught?.();
+  });
+  try {
+    const result = await deps.open(url, redirectUrl);
+    if (result.type === 'success') return result;
+    if (!caught) {
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, deps.lateMs);
+        onCaught = () => {
+          clearTimeout(timer);
+          resolve();
+        };
+      });
+    }
+    return caught ? { type: 'success', url: caught } : result;
+  } finally {
+    sub.remove();
+  }
+}
 
 /** Upper bound for exchanging the authorization code once the browser hands it back. */
 export const EXCHANGE_TIMEOUT_MS = 30_000;
@@ -185,6 +238,8 @@ export async function startBrowserAuthorization(
     await deps.stopLoopback().catch(() => undefined);
   };
 
+  let endWait: () => void = () => undefined;
+
   const session: BrowserAuthorization = {
     authorizationUrl,
     redirectUri,
@@ -202,6 +257,8 @@ export async function startBrowserAuthorization(
         },
         Math.max(0, expiresAt - deps.now()),
       );
+      // while waiting, an Android callback link belongs to this session, not to the router
+      endWait = beginCallbackWait();
       try {
         if (deps.now() >= expiresAt) throw new BrowserAuthError('expired');
         const result = await deps.openAuthSession(authorizationUrl, appCallbackUrl);
@@ -227,6 +284,7 @@ export async function startBrowserAuthorization(
           clearTimeout(deadline);
         }
       } finally {
+        endWait();
         signal?.removeEventListener('abort', onAbort);
         await stopListening();
       }
@@ -234,6 +292,8 @@ export async function startBrowserAuthorization(
     cancel() {
       if (closed) return;
       closed = true;
+      // a cancelled session must not keep claiming callback links, even if its exchange hangs
+      endWait();
       abort.abort();
       deps.dismissAuthSession();
       void stopListening();

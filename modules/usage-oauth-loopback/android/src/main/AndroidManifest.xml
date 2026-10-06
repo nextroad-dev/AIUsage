@@ -1,0 +1,4 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- binding the 127.0.0.1 callback listener needs the socket permission -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+</manifest>

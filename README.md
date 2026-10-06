@@ -17,7 +17,7 @@
 
 ChatGPT / Codex、GitHub Copilot、Kimi Code、Kimi 开放平台余额、OpenRouter、MiniMax、GLM Coding Plan（z.ai）、Runway（API 组织）、Poe、DeepSeek、Command Code、Cline、OpenCode Go。
 
-- **Codex 与 OpenRouter** 通过系统浏览器登录，授权后自动回到应用，无需输入或复制验证码。这依赖本机 `127.0.0.1` 一次性回调模块（`modules/usage-oauth-loopback`，仅 iOS 原生构建包含）。在 Expo Go、旧版本或 Android 上会自动改用替代方式：Codex 使用设备码登录，OpenRouter 使用 API Key，并在页面上说明原因。
+- **Codex 与 OpenRouter** 通过系统浏览器登录，授权后自动回到应用，无需输入或复制验证码。这依赖本机 `127.0.0.1` 一次性回调模块（`modules/usage-oauth-loopback`，iOS 与 Android 原生构建均包含）。在 Expo Go 或不含该模块的旧版本上会自动改用替代方式：Codex 使用设备码登录，OpenRouter 使用 API Key，并在页面上说明原因。
 - **OpenRouter** 授权后生成一个由你掌控的 API Key 并存入钥匙串；查看整个账户余额需要 Management Key，普通 Key 只显示自身用量。
 - **Cline** 使用 app.cline.bot → Settings → API Keys 中创建的 API Key，显示额度余额（有活跃组织时显示组织余额）。
 - **Command Code** 使用官方 CLI 的实验性个人接口，不臆测月度上限。
@@ -48,7 +48,7 @@ Expo Go 可以运行本应用，但不含原生扩展：浏览器登录回调、
 
 ### Android APK
 
-`.github/workflows/android-apk.yml` 在 GitHub 的 Linux 机器上编译 release `.apk`，产物名为 `AIUsage-android-apk`。它使用 Expo 模板的调试密钥签名，可以直接安装（需允许安装未知来源应用），但不适合上架 Google Play。Android 版没有主屏小组件，浏览器登录会改用上面提到的替代方式。
+`.github/workflows/android-apk.yml` 在 GitHub 的 Linux 机器上编译 release `.apk`，产物名为 `AIUsage-android-apk`。它使用 Expo 模板的调试密钥签名，可以直接安装（需允许安装未知来源应用），但不适合上架 Google Play。Android 版同样支持浏览器登录，但没有主屏小组件。
 
 ## 赞助
 

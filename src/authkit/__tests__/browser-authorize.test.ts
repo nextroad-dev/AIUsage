@@ -6,10 +6,12 @@ import {
   base64UrlFromBase64,
   base64UrlFromBytes,
   readCallbackCode,
+  openAuthSessionAndroid,
   startBrowserAuthorization,
   type BrowserAuthorizeDeps,
   type BrowserAuthorizeInput,
 } from '@/authkit/browser-authorize';
+import { isAwaitingCallback } from '@/authkit/callback-session';
 import { LoopbackPortError, LoopbackUnavailableError } from '@/authkit/loopback';
 import type { Credential } from '@/core/types';
 
@@ -282,6 +284,22 @@ describe('browser authorization session', () => {
     }
   });
 
+  it('marks the session as waiting for its callback only while it runs', async () => {
+    const h = harness();
+    let duringOpen: boolean | undefined;
+    const session = await startBrowserAuthorization(codexInput(), {
+      ...h.deps,
+      openAuthSession: async (url, redirectUrl) => {
+        duringOpen = isAwaitingCallback();
+        return h.deps.openAuthSession!(url, redirectUrl);
+      },
+    });
+    expect(isAwaitingCallback()).toBe(false);
+    await session.authorize();
+    expect(duringOpen).toBe(true);
+    expect(isAwaitingCallback()).toBe(false);
+  });
+
   it('gives up on a stalled code exchange instead of connecting forever', async () => {
     jest.useFakeTimers();
     try {
@@ -303,5 +321,56 @@ describe('browser authorization session', () => {
     const session = await startBrowserAuthorization(codexInput(), h.deps);
     await expect(session.authorize()).rejects.toMatchObject({ code: 'failed' });
     expect(h.stops).toBe(1);
+  });
+});
+
+describe('Android auth session', () => {
+  const REDIRECT = 'usage://oauth/codex';
+
+  function android(
+    result: { type: string; url?: string },
+    linkAfterClose?: string,
+    linkBeforeClose?: string,
+  ) {
+    let listener: ((e: { url: string }) => void) | undefined;
+    let removed = false;
+    const deps = {
+      lateMs: 50,
+      addUrlListener: (fn: (e: { url: string }) => void) => {
+        listener = fn;
+        return { remove: () => (removed = true) };
+      },
+      open: async () => {
+        if (linkBeforeClose) listener?.({ url: linkBeforeClose });
+        if (linkAfterClose) setTimeout(() => listener?.({ url: linkAfterClose }), 10);
+        return result;
+      },
+    };
+    return { deps, removed: () => removed };
+  }
+
+  it('passes a normal success straight through', async () => {
+    const a = android({ type: 'success', url: `${REDIRECT}?code=c` });
+    await expect(openAuthSessionAndroid('https://auth', REDIRECT, a.deps)).resolves.toEqual({
+      type: 'success',
+      url: `${REDIRECT}?code=c`,
+    });
+    expect(a.removed()).toBe(true);
+  });
+
+  it('recovers a callback that lands just after the app became active', async () => {
+    const a = android({ type: 'dismiss' }, `${REDIRECT}?code=late&state=s`);
+    await expect(openAuthSessionAndroid('https://auth', REDIRECT, a.deps)).resolves.toEqual({
+      type: 'success',
+      url: `${REDIRECT}?code=late&state=s`,
+    });
+  });
+
+  it('keeps a real dismissal and ignores unrelated links', async () => {
+    const a = android({ type: 'dismiss' }, 'usage://account/1');
+    await expect(openAuthSessionAndroid('https://auth', REDIRECT, a.deps)).resolves.toEqual({
+      type: 'dismiss',
+    });
+    expect(a.removed()).toBe(true);
   });
 });

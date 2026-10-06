@@ -1,3 +1,4 @@
+import { beginCallbackWait } from '@/authkit/callback-session';
 import { redirectOAuthSystemPath } from '@/authkit/oauth-callback-route';
 
 describe('sign-in callback deep links', () => {
@@ -11,6 +12,24 @@ describe('sign-in callback deep links', () => {
       expect(redirectOAuthSystemPath({ path, initial: true })).toBe('/add');
       expect(redirectOAuthSystemPath({ path, initial: false })).toBe('/add');
     }
+  });
+
+  it('leaves a callback to the live sign-in session on Android instead of navigating away', () => {
+    const end = beginCallbackWait();
+    try {
+      expect(
+        redirectOAuthSystemPath({ path: 'usage://oauth/codex?code=c&state=s', initial: false }),
+      ).toBe('');
+      // a cold start can never belong to a live session
+      expect(
+        redirectOAuthSystemPath({ path: 'usage://oauth/codex?code=c&state=s', initial: true }),
+      ).toBe('/add');
+    } finally {
+      end();
+    }
+    expect(
+      redirectOAuthSystemPath({ path: 'usage://oauth/codex?code=c&state=s', initial: false }),
+    ).toBe('/add');
   });
 
   it('leaves every other link untouched', () => {
