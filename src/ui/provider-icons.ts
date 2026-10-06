@@ -2,8 +2,9 @@
  * Official provider marks, stored as structured path data so the component can render them with
  * <Svg>/<Path> and tint them with the theme text colour (see ui/provider-icon.tsx).
  *
- * Sources: @lobehub/icons-static-svg (AI brand set) and simple-icons (GitHub).
- * Brands remain the property of their owners; used here only to identify the provider.
+ * Sources: @lobehub/icons-static-svg (AI brand set) and simple-icons (GitHub); the API relay mark
+ * is drawn for this app. Brands remain the property of their owners; used here only to identify
+ * the provider.
  *
  * Regenerate with scripts/fetch-provider-icons.mjs when a brand updates its mark.
  */
@@ -108,6 +109,23 @@ export const providerIcons: Record<string, ProviderMark> = {
       },
     ],
   },
+  'command-goat': {
+    viewBox: '0 0 24 24',
+    paths: [
+      {
+        d: 'M19.334 0a4.67 4.67 0 0 0-4.666 4.668v2H9.334v-2A4.67 4.67 0 0 0 4.668 0 4.67 4.67 0 0 0 0 4.668a4.67 4.67 0 0 0 4.668 4.665h2v5.334h-2A4.67 4.67 0 0 0 0 19.334 4.67 4.67 0 0 0 4.668 24a4.67 4.67 0 0 0 4.666-4.666v-2h5.334v2A4.67 4.67 0 0 0 19.334 24 4.67 4.67 0 0 0 24 19.334a4.67 4.67 0 0 0-4.666-4.667h-2V9.333h2A4.67 4.67 0 0 0 24 4.668 4.673 4.673 0 0 0 19.334 0m-2 6.666v-2c0-1.107.893-2 2-2s2 .893 2 2-.893 2-2 2zm-12.668 0c-1.107 0-2-.893-2-2s.893-2 2-2 2 .893 2 2v2zm4.666 8V9.334h5.334v5.334zm10.002 6.667c-1.107 0-2-.893-2-2v-2h2c1.107 0 2 .892 2 2 0 1.107-.893 2-2 2m-14.668 0c-1.107 0-2-.893-2-2 0-1.108.893-2 2-2h2v2c0 1.107-.893 2-2 2',
+      },
+    ],
+  },
+  cline: {
+    viewBox: '0 0 24 24',
+    paths: [
+      {
+        d: 'M17.035 3.991c2.75 0 4.98 2.24 4.98 5.003v1.667l1.45 2.896a1.01 1.01 0 01-.002.909l-1.448 2.864v1.668c0 2.762-2.23 5.002-4.98 5.002H7.074c-2.751 0-4.98-2.24-4.98-5.002V17.33l-1.48-2.855a1.01 1.01 0 01-.003-.927l1.482-2.887V8.994c0-2.763 2.23-5.003 4.98-5.003h9.962zM8.265 9.6a2.274 2.274 0 00-2.274 2.274v4.042a2.274 2.274 0 004.547 0v-4.042A2.274 2.274 0 008.265 9.6zm7.326 0a2.274 2.274 0 00-2.274 2.274v4.042a2.274 2.274 0 104.548 0v-4.042A2.274 2.274 0 0015.59 9.6z',
+      },
+      { d: 'M12.054 5.558a2.779 2.779 0 100-5.558 2.779 2.779 0 000 5.558z' },
+    ],
+  },
   'opencode-go': {
     viewBox: '0 0 24 24',
     paths: [{ d: 'M16 6H8v12h8V6zm4 16H4V2h16v20z' }],
@@ -131,5 +149,9 @@ export const providerIcons: Record<string, ProviderMark> = {
         d: 'M22.106 5.68L12.5.135a.998.998 0 00-.998 0L1.893 5.68a.84.84 0 00-.419.726v11.186c0 .3.16.577.42.727l9.607 5.547a.999.999 0 00.998 0l9.608-5.547a.84.84 0 00.42-.727V6.407a.84.84 0 00-.42-.726zm-.603 1.176L12.228 22.92c-.063.108-.228.064-.228-.061V12.34a.59.59 0 00-.295-.51l-9.11-5.26c-.107-.062-.063-.228.062-.228h18.55c.264 0 .428.286.296.514z',
       },
     ],
+  },
+  relay: {
+    viewBox: '0 0 24 24',
+    paths: [{ d: 'M4 7h12V4l5 4-5 4V9H4zM20 15H8v-3l-5 4 5 4v-3h12z' }],
   },
 };

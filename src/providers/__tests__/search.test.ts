@@ -10,7 +10,8 @@ describe('provider search', () => {
   });
 
   it('matches names and ids, ignoring case, spaces and punctuation', () => {
-    expect(names('cline')).toEqual(['Cline']);
+    expect(names('cline')).toEqual(['Cline / ClinePass']);
+    expect(names('clinepass')).toEqual(['Cline / ClinePass']);
     expect(names('OPEN router')).toEqual(['OpenRouter']);
     expect(names('chatgpt/codex')).toEqual(['ChatGPT / Codex']);
     expect(names('command-goat')).toEqual(['Command Code']);

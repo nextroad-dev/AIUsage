@@ -316,8 +316,8 @@ export const zh: Record<string, string> = {
   'Cookie sign-in removed; existing accounts are read-only.':
     '已移除 Cookie 登录，已有账号仅可查看。',
   'No usage connection yet.': '暂不支持自动采集。',
-  'Shows your Cline credits. Create an API key at app.cline.bot under Settings > API Keys.':
-    '显示 Cline 额度余额。请在 app.cline.bot 的 Settings > API Keys 中创建 API Key。',
+  'Shows your Cline credits and, with ClinePass, the 5-hour, weekly and monthly limits. Create an API key at app.cline.bot under Settings > API Keys.':
+    '显示 Cline 额度余额；订阅了 ClinePass 时还会显示 5 小时、每周和每月用量。请在 app.cline.bot 的 Settings > API Keys 中创建 API Key。',
   // subscriptions, forecasts, reset notices, widget
   '{name}: plan ends or renews {date}': '{name}：套餐将于 {date} 到期或续费',
   'Within a day. Check your subscription if you do not plan to keep it.':

@@ -10,7 +10,7 @@ import { renewalInfo } from '@/ui/meter-text';
 import { MeterRow } from '@/ui/meter-row';
 import { PressableScale } from '@/ui/motion';
 import { ProviderIcon } from '@/ui/provider-icon';
-import { StatusBadge } from '@/ui/status-badge';
+import { StatusBadge, statusLabel } from '@/ui/status-badge';
 
 export { forecastText, meterTitle, renewalInfo, resetText } from '@/ui/meter-text';
 
@@ -48,16 +48,27 @@ export function AccountCard({
       scaleTo={0.985}
     >
       <View style={styles.content}>
+        {/* one line: logo, name, and the plan on the right, all centred on the same axis */}
         <View style={styles.header}>
           <ProviderIcon providerId={view.account.providerId} label={name} size={24} />
-          {/* empty lines are left out so a lone title centres on the icon */}
-          <View style={styles.titles}>
-            <ThemedText type="smallBold">{name}</ThemedText>
-            {subtitle ? (
-              <ThemedText type="small" themeColor="textSecondary">
-                {subtitle}
-              </ThemedText>
-            ) : null}
+          <ThemedText type="smallBold" numberOfLines={1} style={styles.name}>
+            {name}
+          </ThemedText>
+          {subtitle ? (
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              numberOfLines={1}
+              style={styles.subtitle}
+            >
+              {subtitle}
+            </ThemedText>
+          ) : null}
+        </View>
+        {/* status and plan end sit under the name, indented past the logo */}
+        {renewal || statusLabel(status, now, t) ? (
+          <View style={styles.meta}>
+            <StatusBadge status={status} now={now} />
             {renewal ? (
               <ThemedText
                 type="small"
@@ -68,8 +79,7 @@ export function AccountCard({
               </ThemedText>
             ) : null}
           </View>
-          <StatusBadge status={status} now={now} />
-        </View>
+        ) : null}
 
         {meters.length > 0 ? (
           <View style={styles.meters}>
@@ -105,6 +115,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
   },
-  titles: { gap: Spacing.half, flexShrink: 1, flexGrow: 1, justifyContent: 'center' },
+  name: { flexShrink: 1, flexGrow: 1 },
+  // the plan yields space to the name first, but never collapses to nothing
+  subtitle: { flexShrink: 2, textAlign: 'right', minWidth: 48 },
+  // 24pt logo + 8pt gap: aligned with the name above
+  meta: {
+    marginTop: -Spacing.two,
+    paddingLeft: 24 + Spacing.two,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
   meters: { gap: Spacing.two },
 });

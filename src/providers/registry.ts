@@ -119,11 +119,11 @@ export const providers: ProviderMeta[] = [
   },
   {
     id: 'cline',
-    name: 'Cline',
+    name: 'Cline / ClinePass',
     automation: 'plugin',
     auth: ['apiKey'],
     plugin: clinePlugin(),
-    note: 'Shows your Cline credits. Create an API key at app.cline.bot under Settings > API Keys.',
+    note: 'Shows your Cline credits and, with ClinePass, the 5-hour, weekly and monthly limits. Create an API key at app.cline.bot under Settings > API Keys.',
   },
   {
     id: 'opencode-go',

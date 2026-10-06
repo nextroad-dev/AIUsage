@@ -37,10 +37,23 @@ const SOURCES = {
   runway: 'lobehub:runway',
   poe: 'lobehub:poe',
   deepseek: 'lobehub:deepseek',
+  'command-goat': 'lobehub:commandcode',
+  cline: 'lobehub:cline',
   'opencode-go': 'lobehub:opencode',
   opencode: 'lobehub:opencode',
   claude: 'lobehub:claude',
   cursor: 'lobehub:cursor',
+};
+
+/**
+ * Marks drawn for this app, for entries that are not a brand. `relay` stands for any API relay
+ * (New API, Sub2API, One API...): two opposing arrows, i.e. requests forwarded both ways.
+ */
+const LOCAL = {
+  relay: {
+    viewBox: '0 0 24 24',
+    paths: [{ d: 'M4 7h12V4l5 4-5 4V9H4zM20 15H8v-3l-5 4 5 4v-3h12z' }],
+  },
 };
 
 const urlFor = (ref) => {
@@ -89,6 +102,11 @@ for (const [id, ref] of Object.entries(SOURCES)) {
   console.log(`ok ${id.padEnd(14)} viewBox=${viewBox} paths=${paths.length}`);
 }
 
+for (const [id, mark] of Object.entries(LOCAL)) {
+  entries.push({ id, ...mark });
+  console.log(`ok ${id.padEnd(14)} (drawn locally)`);
+}
+
 const data = entries
   .map(
     ({ id, viewBox, paths }) =>
@@ -104,8 +122,9 @@ const file = `/**
  * Official provider marks, stored as structured path data so the component can render them with
  * <Svg>/<Path> and tint them with the theme text colour (see ui/provider-icon.tsx).
  *
- * Sources: @lobehub/icons-static-svg (AI brand set) and simple-icons (GitHub).
- * Brands remain the property of their owners; used here only to identify the provider.
+ * Sources: @lobehub/icons-static-svg (AI brand set) and simple-icons (GitHub); the API relay mark
+ * is drawn for this app. Brands remain the property of their owners; used here only to identify
+ * the provider.
  *
  * Regenerate with scripts/fetch-provider-icons.mjs when a brand updates its mark.
  */
