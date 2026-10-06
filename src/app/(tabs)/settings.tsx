@@ -7,7 +7,7 @@ import { Screen } from '@/components/screen';
 import { Section, Row } from '@/components/section';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing } from '@/constants/theme';
+import { Accents, Radius, Spacing, type AccentName } from '@/constants/theme';
 import {
   useAccountActions,
   useAccountViews,
@@ -18,7 +18,7 @@ import {
 import { useTheme } from '@/hooks/use-theme';
 import { useT, type LocaleSetting, type ThemeSetting } from '@/i18n';
 import { usePreferences } from '@/providers/preferences';
-import { Button, Segmented } from '@/ui/controls';
+import { Button, ColorSwatches, Segmented } from '@/ui/controls';
 import { haptics } from '@/ui/haptics';
 import { enterFade, enterItem, exitFade, layoutShift } from '@/ui/motion';
 import { ProviderIcon } from '@/ui/provider-icon';
@@ -27,6 +27,17 @@ import { MultiChips, ToggleRow } from '@/ui/toggles';
 const GITHUB_HANDLE = 'nextroad-dev';
 const GITHUB_URL = 'https://github.com/nextroad-dev';
 const SPONSOR_URL = 'https://afdian.com/a/nextroad';
+
+/** Spoken and shown names of the theme colours (English keys, translated with t()). */
+const ACCENT_LABELS: Record<AccentName, string> = {
+  blue: 'Blue',
+  indigo: 'Indigo',
+  violet: 'Violet',
+  pink: 'Pink',
+  orange: 'Orange',
+  green: 'Green',
+  teal: 'Teal',
+};
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -38,7 +49,14 @@ export default function SettingsScreen() {
   const { settings, update } = useAlertSettings();
   const permission = useNotificationPermission();
   const background = useBackgroundState(settings.backgroundRefresh);
-  const { localeSetting, themeSetting, setLocaleSetting, setThemeSetting } = usePreferences();
+  const {
+    localeSetting,
+    themeSetting,
+    accentSetting,
+    setLocaleSetting,
+    setThemeSetting,
+    setAccentSetting,
+  } = usePreferences();
 
   const confirmClear = () =>
     Alert.alert(
@@ -109,6 +127,21 @@ export default function SettingsScreen() {
             label={t('Appearance')}
             value={themeSetting}
             onChange={(v) => setThemeSetting(v)}
+          />
+        </View>
+        <View style={{ gap: Spacing.two }}>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('Theme color')}
+          </ThemedText>
+          <ColorSwatches<AccentName>
+            label={t('Theme color')}
+            options={(Object.keys(Accents) as AccentName[]).map((name) => ({
+              value: name,
+              color: Accents[name],
+              label: t(ACCENT_LABELS[name]),
+            }))}
+            value={accentSetting}
+            onChange={setAccentSetting}
           />
         </View>
       </Section>

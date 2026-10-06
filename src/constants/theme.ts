@@ -37,6 +37,27 @@ export const Colors = {
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
+/**
+ * User-selectable theme (accent) colours. Each replaces `primary` in both schemes, so every one
+ * keeps white button text at 4.5:1 or better (checked in the theme tests). Blue is the default.
+ */
+export const Accents = {
+  blue: '#2563EB',
+  indigo: '#4F46E5',
+  violet: '#7C3AED',
+  pink: '#DB2777',
+  orange: '#C2410C',
+  green: '#15803D',
+  teal: '#0F766E',
+} as const;
+
+export type AccentName = keyof typeof Accents;
+
+export const DEFAULT_ACCENT: AccentName = 'blue';
+
+export const isAccentName = (v: unknown): v is AccentName =>
+  typeof v === 'string' && Object.prototype.hasOwnProperty.call(Accents, v);
+
 export const Fonts = Platform.select({
   ios: {
     sans: 'system-ui',

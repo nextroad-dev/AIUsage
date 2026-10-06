@@ -151,6 +151,53 @@ export function OptionTile({
   );
 }
 
+/**
+ * Round colour swatches with radio semantics. The selected one gets a ring in the text colour
+ * plus a check mark, so the choice never relies on hue alone.
+ */
+export function ColorSwatches<T extends string>({
+  options,
+  value,
+  onChange,
+  label,
+}: {
+  options: { value: T; color: string; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+  label?: string;
+}) {
+  const theme = useTheme();
+  return (
+    <View style={styles.swatches} accessibilityRole="radiogroup" accessibilityLabel={label}>
+      {options.map((o) => {
+        const on = o.value === value;
+        return (
+          <PressableScale
+            key={o.value}
+            accessibilityRole="radio"
+            accessibilityLabel={o.label}
+            accessibilityState={{ checked: on }}
+            scaleTo={0.9}
+            onPress={() => {
+              if (!on) haptics.select();
+              onChange(o.value);
+            }}
+            style={[styles.swatchRing, { borderColor: on ? theme.text : 'transparent' }]}
+          >
+            <View style={[styles.swatch, { backgroundColor: o.color }]}>
+              {on ? (
+                <ThemedText type="smallBold" style={{ color: '#FFFFFF' }}>
+                  ✓
+                </ThemedText>
+              ) : null}
+            </View>
+          </PressableScale>
+        );
+      })}
+    </View>
+  );
+}
+
 export function Segmented<T extends string | number>({
   options,
   value,
@@ -218,5 +265,22 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   segFill: { borderRadius: Radius.control },
+  swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  // 44pt touch target: 36pt swatch inside a 2pt ring with 2pt breathing room
+  swatchRing: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  swatch: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   segLabel: { textAlign: 'center' },
 });

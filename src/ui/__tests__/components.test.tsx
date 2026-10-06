@@ -4,7 +4,7 @@ import type { Meter, UsageSnapshot } from '@/core/types';
 import type { AccountView } from '@/data/summary';
 import { setLocale } from '@/i18n';
 import { AccountCard } from '@/ui/account-card';
-import { Button, Field, Segmented } from '@/ui/controls';
+import { Button, ColorSwatches, Field, Segmented } from '@/ui/controls';
 import { MeterRow } from '@/ui/meter-row';
 import { StatusBadge } from '@/ui/status-badge';
 import { defaultColumns } from '@/ui/option-grid';
@@ -233,6 +233,26 @@ describe('controls', () => {
     expect(screen.getByRole('radio', { name: 'English', checked: true })).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Chinese', checked: false })).toBeTruthy();
     expect(screen.queryByRole('tab')).toBeNull();
+  });
+});
+
+describe('ColorSwatches', () => {
+  it('exposes named radios and reports the picked colour', async () => {
+    const onChange = jest.fn();
+    await render(
+      <ColorSwatches
+        label="Theme color"
+        options={[
+          { value: 'blue', color: '#2563EB', label: 'Blue' },
+          { value: 'teal', color: '#0F766E', label: 'Teal' },
+        ]}
+        value="blue"
+        onChange={onChange}
+      />,
+    );
+    expect(screen.getByRole('radio', { name: 'Blue', checked: true })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('radio', { name: 'Teal', checked: false }));
+    expect(onChange).toHaveBeenCalledWith('teal');
   });
 });
 

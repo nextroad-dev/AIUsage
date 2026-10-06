@@ -1,24 +1,30 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 
+import { DEFAULT_ACCENT, isAccentName, type AccentName } from '@/constants/theme';
 import { getServices } from '@/data/services';
 import { resolveLocale, setLocale, type LocaleSetting, type ThemeSetting } from '@/i18n';
 
 const LOCALE_KEY = 'locale-setting';
 const APPEARANCE_KEY = 'appearance-setting';
+const ACCENT_KEY = 'accent-setting';
 
 interface Preferences {
   localeSetting: LocaleSetting;
   themeSetting: ThemeSetting;
+  accentSetting: AccentName;
   setLocaleSetting: (v: LocaleSetting) => void;
   setThemeSetting: (v: ThemeSetting) => void;
+  setAccentSetting: (v: AccentName) => void;
 }
 
 const PreferencesContext = createContext<Preferences>({
   localeSetting: 'system',
   themeSetting: 'system',
+  accentSetting: DEFAULT_ACCENT,
   setLocaleSetting: () => {},
   setThemeSetting: () => {},
+  setAccentSetting: () => {},
 });
 
 /**
@@ -29,18 +35,22 @@ const PreferencesContext = createContext<Preferences>({
 export function PreferencesProvider({ children }: { children: ReactNode }) {
   const [localeSetting, setLocaleState] = useState<LocaleSetting>('system');
   const [themeSetting, setThemeState] = useState<ThemeSetting>('system');
+  const [accentSetting, setAccentState] = useState<AccentName>(DEFAULT_ACCENT);
 
   useEffect(() => {
     let cancelled = false;
     getServices()
       .then(async (s) => {
-        const [l, a] = await Promise.all([
+        const [l, a, c] = await Promise.all([
           s.repos.settings.getJson<LocaleSetting>(LOCALE_KEY, 'system'),
           s.repos.settings.getJson<ThemeSetting>(APPEARANCE_KEY, 'system'),
+          s.repos.settings.getJson<unknown>(ACCENT_KEY, DEFAULT_ACCENT),
         ]);
         if (cancelled) return;
         setLocaleState(l);
         setThemeState(a);
+        // an unknown stored value (e.g. a colour removed in a later version) falls back to the default
+        setAccentState(isAccentName(c) ? c : DEFAULT_ACCENT);
         setLocale(resolveLocale(l));
       })
       .catch(() => {
@@ -75,9 +85,23 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       .catch(() => {});
   }, []);
 
+  const setAccentSetting = useCallback((v: AccentName) => {
+    setAccentState(v);
+    getServices()
+      .then((s) => s.repos.settings.setJson(ACCENT_KEY, v))
+      .catch(() => {});
+  }, []);
+
   return (
     <PreferencesContext.Provider
-      value={{ localeSetting, themeSetting, setLocaleSetting, setThemeSetting }}
+      value={{
+        localeSetting,
+        themeSetting,
+        accentSetting,
+        setLocaleSetting,
+        setThemeSetting,
+        setAccentSetting,
+      }}
     >
       {children}
     </PreferencesContext.Provider>

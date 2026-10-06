@@ -2,6 +2,7 @@ import { StyleSheet, Switch, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { OptionTile } from '@/ui/controls';
 import { haptics } from '@/ui/haptics';
 import { useOptionGrid } from '@/ui/option-grid';
@@ -17,6 +18,7 @@ export function ToggleRow({
   value: boolean;
   onChange: (v: boolean) => void;
 }) {
+  const theme = useTheme();
   return (
     <View style={styles.row}>
       <View style={styles.text}>
@@ -30,6 +32,7 @@ export function ToggleRow({
       <Switch
         accessibilityLabel={label}
         value={value}
+        trackColor={{ true: theme.primary }}
         onValueChange={(v) => {
           haptics.select();
           onChange(v);

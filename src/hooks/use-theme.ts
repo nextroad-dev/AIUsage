@@ -3,9 +3,10 @@
  * https://docs.expo.dev/guides/color-schemes/
  */
 
+import { useMemo } from 'react';
 import { useColorScheme as useSystemScheme } from 'react-native';
 
-import { Colors } from '@/constants/theme';
+import { Accents, Colors } from '@/constants/theme';
 import { usePreferences } from '@/providers/preferences';
 
 function effectiveScheme(
@@ -21,9 +22,11 @@ function effectiveScheme(
  * otherwise follows the OS scheme. Safe in tests (defaults to light).
  */
 export function useTheme() {
-  const { themeSetting } = usePreferences();
+  const { themeSetting, accentSetting } = usePreferences();
   const system = useSystemScheme();
-  return Colors[effectiveScheme(themeSetting, system)];
+  const base = Colors[effectiveScheme(themeSetting, system)];
+  // the chosen theme colour replaces the action hue; everything else follows the scheme
+  return useMemo(() => ({ ...base, primary: Accents[accentSetting] }), [base, accentSetting]);
 }
 
 /** Effective scheme name, for components that branch on light/dark directly. */
