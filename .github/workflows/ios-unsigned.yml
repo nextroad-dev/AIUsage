@@ -55,10 +55,10 @@ jobs:
         run: |
           ARCHIVE="$RUNNER_TEMP/App.xcarchive"
           VERSION=$(node -p "require('./app.json').expo.version")
-          cd "$RUNNER_TEMP"
-          rm -rf Payload && mkdir Payload
-          cp -R "$ARCHIVE"/Products/Applications/*.app Payload/
-          zip -qry "AIUsage-$VERSION-unsigned.ipa" Payload
+          APP=$(ls -d "$ARCHIVE"/Products/Applications/*.app | head -1)
+          # main Info.plist and executable first: some sideloading tools only scan the head of
+          # the archive for the main bundle (see scripts/package-ipa.py)
+          python3 scripts/package-ipa.py "$APP" "$RUNNER_TEMP/AIUsage-$VERSION-unsigned.ipa"
           echo "IPA=$RUNNER_TEMP/AIUsage-$VERSION-unsigned.ipa" >> "$GITHUB_ENV"
           ls -lh "$RUNNER_TEMP"/*.ipa
 
