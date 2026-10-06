@@ -16,6 +16,8 @@ import { AccountCard } from '@/ui/account-card';
 import { AccountCardSkeleton } from '@/ui/account-card-skeleton';
 import { Button } from '@/ui/controls';
 import { RefreshButton } from '@/ui/refresh-button';
+import { UpdatePill } from '@/ui/update-pill';
+import { useUpdateNotice } from '@/data/update-check';
 import { enterFade, enterItem, exitFade, layoutShift } from '@/ui/motion';
 
 export default function OverviewScreen() {
@@ -26,6 +28,7 @@ export default function OverviewScreen() {
   const services = useServices();
   const views = useAccountViews();
   const refresh = useRefreshAll();
+  const update = useUpdateNotice();
 
   // Refresh once when the app opens; the rate limiter makes this cheap if data is recent.
   const ready = !!services.data;
@@ -44,6 +47,11 @@ export default function OverviewScreen() {
     <Screen>
       <ScreenHeader
         title={t('Usage')}
+        accessory={
+          update.notice ? (
+            <UpdatePill release={update.notice} onDismiss={update.dismiss} />
+          ) : undefined
+        }
         action={
           <RefreshButton
             refreshing={refresh.isPending}

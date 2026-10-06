@@ -36,6 +36,9 @@ export const zh: Record<string, string> = {
     '账号、凭据和用量历史只保存在这台设备上，不会发送到我们的任何服务器。',
   // API relays
   'API relay': '中转站',
+  'New v{version}': '新版本 v{version}',
+  'New version {version} available': '有新版本 {version}',
+  'Dismiss this version': '不再提示此版本',
   'Tip the author': '打赏作者',
   Afdian: '爱发电',
   Close: '关闭',
