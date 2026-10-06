@@ -55,22 +55,25 @@
 | ChatGPT / Codex | 浏览器登录 | 5 小时窗口、每周窗口、额度余额、套餐有效期 |
 | GitHub Copilot | 个人访问令牌（Token） | Premium 请求、Chat、代码补全用量 |
 | OpenRouter | 浏览器登录 / API Key | 额度余额、Key 限额、今日 / 本周 / 本月花费 |
-| Cline | API Key | 额度余额（含组织余额） |
-| **API 中转站**（New API、Sub2API、One API 等） | 站点地址 + API Key | Key 额度、已用、剩余余额 |
+| Cline / ClinePass | API Key | ClinePass 的 5 小时 / 每周 / 每月用量与套餐到期日；额度余额（含组织余额） |
+| **中转站**（New API、Sub2API、One API 等） | 站点地址 + API Key | Key 额度、已用、剩余余额（按站点设置的货币显示） |
+| OpenAI 开放平台 | Admin API Key | 组织本月与今日花费 |
+| Anthropic 开放平台 | Admin API Key | 组织本月与今日花费 |
 | Kimi Code | API Key | 5 小时窗口、每月额度 |
 | Kimi 开放平台 | API Key | 可用余额 |
 | MiniMax Token Plan | API Key | 5 小时窗口 |
 | GLM Coding Plan（z.ai） | API Key | Token 用量 |
-| DeepSeek | API Key | 可用余额 |
+| DeepSeek 开放平台 | API Key | 可用余额 |
 | Poe | API Key | 积分余额 |
-| Runway | API Key | API 积分余额（不含网页订阅积分） |
+| Runway 开放平台 | API Key | API 积分余额（不含网页订阅积分） |
 | Command Code | API Key | 5 小时 / 每周窗口与各类积分（实验性接口） |
 | OpenCode Go | API Key | Go 订阅额度 |
 
 - **浏览器登录**：在系统浏览器里完成授权，自动回到应用，无需复制任何验证码。
 - **OpenRouter** 浏览器授权会生成一个属于你的 API Key；查看整个账户余额需要 Management Key。
-- **API 中转站**：只需填写站点地址和 Key，点「智能识别」后自动判断程序类型（New API / Sub2API / One API / OpenAI 兼容）、读取站点名称和余额；之后刷新直接使用识别出的方式查询，失效时才重新识别。
-- **暂不支持**：Claude / Claude Code（Anthropic 条款不允许第三方读取用量）、Cursor、OpenCode Zen（暂无可靠的余额接口）。
+- **中转站**：只需填写站点地址和 Key，点「智能识别」后自动判断程序类型（New API / Sub2API / One API / OpenAI 兼容）、读取站点名称和余额；之后刷新直接使用识别出的方式查询，失效时才重新识别。
+- **OpenAI / Anthropic 开放平台**需要组织的 Admin API Key（普通项目 Key 无权读取费用）；两家都不提供余额接口，因此显示花费。
+- **暂不支持**：Claude / Claude Code 订阅（Anthropic 条款不允许第三方读取用量）、Cursor、OpenCode Zen、MiniMax 与智谱 GLM 的开放平台按量余额（暂无公开的余额接口）、Google Antigravity（只能借用 Google 官方客户端的 OAuth 凭据登录）。
 
 > 部分服务的用量接口并非官方公开 API，服务商调整后可能暂时失效；遇到问题欢迎提 [Issue](https://github.com/nextroad-dev/aiusage/issues)。
 

@@ -60,7 +60,7 @@ export const providers: ProviderMeta[] = [
   },
   {
     id: 'kimi-balance',
-    name: 'Kimi Open Platform balance',
+    name: 'Kimi Open Platform',
     automation: 'spec',
     auth: ['apiKey'],
     spec: specs.kimiBalance,
@@ -93,14 +93,20 @@ export const providers: ProviderMeta[] = [
   },
   {
     id: 'runway',
-    name: 'Runway',
+    name: 'Runway Open Platform',
     automation: 'spec',
     auth: ['apiKey'],
     spec: specs.runway,
     note: 'API organization only, not web subscription credits.',
   },
   { id: 'poe', name: 'Poe', automation: 'spec', auth: ['apiKey'], spec: specs.poe },
-  { id: 'deepseek', name: 'DeepSeek', automation: 'spec', auth: ['apiKey'], spec: specs.deepseek },
+  {
+    id: 'deepseek',
+    name: 'DeepSeek Open Platform',
+    automation: 'spec',
+    auth: ['apiKey'],
+    spec: specs.deepseek,
+  },
   {
     id: 'command-goat',
     name: 'Command Code',
@@ -111,7 +117,7 @@ export const providers: ProviderMeta[] = [
   },
   {
     id: 'openai-platform',
-    name: 'OpenAI API Platform',
+    name: 'OpenAI Open Platform',
     automation: 'plugin',
     auth: ['apiKey'],
     plugin: openaiPlatformPlugin(),
@@ -119,7 +125,7 @@ export const providers: ProviderMeta[] = [
   },
   {
     id: 'anthropic-platform',
-    name: 'Claude API Platform (Anthropic)',
+    name: 'Anthropic Open Platform',
     automation: 'plugin',
     auth: ['apiKey'],
     plugin: anthropicPlatformPlugin(),

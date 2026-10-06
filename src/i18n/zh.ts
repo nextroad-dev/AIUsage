@@ -39,8 +39,12 @@ export const zh: Record<string, string> = {
   'Tip the author': '打赏作者',
   Afdian: '爱发电',
   Close: '关闭',
-  'OpenAI API Platform': 'OpenAI 开放平台',
-  'Claude API Platform (Anthropic)': 'Claude 开放平台（Anthropic）',
+  // pay-as-you-go API accounts are all "<brand> Open Platform" / "<品牌> 开放平台"
+  'OpenAI Open Platform': 'OpenAI 开放平台',
+  'Anthropic Open Platform': 'Anthropic 开放平台',
+  'Kimi Open Platform': 'Kimi 开放平台',
+  'DeepSeek Open Platform': 'DeepSeek 开放平台',
+  'Runway Open Platform': 'Runway 开放平台',
   "Needs an Admin API key (sk-admin-…) from platform.openai.com > Settings > Admin keys. Shows the organization's spend this month and today.":
     '需要 Admin API Key（sk-admin-…），在 platform.openai.com 的 Settings > Admin keys 中创建。显示组织本月与今日的花费。',
   "Needs an Admin API key (sk-ant-admin…) from platform.claude.com > Settings > Admin keys. Shows the organization's spend this month and today.":
