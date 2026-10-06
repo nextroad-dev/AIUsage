@@ -8,23 +8,29 @@ import { resolveLocale, setLocale, type LocaleSetting, type ThemeSetting } from 
 const LOCALE_KEY = 'locale-setting';
 const APPEARANCE_KEY = 'appearance-setting';
 const ACCENT_KEY = 'accent-setting';
+const SPONSOR_KEY = 'sponsor-card-dismissed';
 
 interface Preferences {
   localeSetting: LocaleSetting;
   themeSetting: ThemeSetting;
   accentSetting: AccentName;
+  /** the sponsor card at the top of Settings was closed; About then offers the link instead */
+  sponsorDismissed: boolean;
   setLocaleSetting: (v: LocaleSetting) => void;
   setThemeSetting: (v: ThemeSetting) => void;
   setAccentSetting: (v: AccentName) => void;
+  setSponsorDismissed: (v: boolean) => void;
 }
 
 const PreferencesContext = createContext<Preferences>({
   localeSetting: 'system',
   themeSetting: 'system',
   accentSetting: DEFAULT_ACCENT,
+  sponsorDismissed: false,
   setLocaleSetting: () => {},
   setThemeSetting: () => {},
   setAccentSetting: () => {},
+  setSponsorDismissed: () => {},
 });
 
 /**
@@ -36,21 +42,24 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   const [localeSetting, setLocaleState] = useState<LocaleSetting>('system');
   const [themeSetting, setThemeState] = useState<ThemeSetting>('system');
   const [accentSetting, setAccentState] = useState<AccentName>(DEFAULT_ACCENT);
+  const [sponsorDismissed, setSponsorState] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     getServices()
       .then(async (s) => {
-        const [l, a, c] = await Promise.all([
+        const [l, a, c, d] = await Promise.all([
           s.repos.settings.getJson<LocaleSetting>(LOCALE_KEY, 'system'),
           s.repos.settings.getJson<ThemeSetting>(APPEARANCE_KEY, 'system'),
           s.repos.settings.getJson<unknown>(ACCENT_KEY, DEFAULT_ACCENT),
+          s.repos.settings.getJson<boolean>(SPONSOR_KEY, false),
         ]);
         if (cancelled) return;
         setLocaleState(l);
         setThemeState(a);
         // an unknown stored value (e.g. a colour removed in a later version) falls back to the default
         setAccentState(isAccentName(c) ? c : DEFAULT_ACCENT);
+        setSponsorState(d === true);
         setLocale(resolveLocale(l));
       })
       .catch(() => {
@@ -92,15 +101,24 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       .catch(() => {});
   }, []);
 
+  const setSponsorDismissed = useCallback((v: boolean) => {
+    setSponsorState(v);
+    getServices()
+      .then((s) => s.repos.settings.setJson(SPONSOR_KEY, v))
+      .catch(() => {});
+  }, []);
+
   return (
     <PreferencesContext.Provider
       value={{
         localeSetting,
         themeSetting,
         accentSetting,
+        sponsorDismissed,
         setLocaleSetting,
         setThemeSetting,
         setAccentSetting,
+        setSponsorDismissed,
       }}
     >
       {children}

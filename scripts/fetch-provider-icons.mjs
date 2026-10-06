@@ -39,6 +39,8 @@ const SOURCES = {
   deepseek: 'lobehub:deepseek',
   'command-goat': 'lobehub:commandcode',
   cline: 'lobehub:cline',
+  'openai-platform': 'lobehub:openai',
+  'anthropic-platform': 'lobehub:anthropic',
   'opencode-go': 'lobehub:opencode',
   opencode: 'lobehub:opencode',
   claude: 'lobehub:claude',

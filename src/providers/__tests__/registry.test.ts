@@ -17,15 +17,17 @@ const active = [
   'poe',
   'deepseek',
   'command-goat',
+  'openai-platform',
+  'anthropic-platform',
   'relay',
   'cline',
   'opencode-go',
 ];
 
 describe('OAuth/API-key-only provider registry', () => {
-  it('keeps 27 unique identities, including unsupported historical metadata', () => {
-    expect(providers).toHaveLength(27);
-    expect(new Set(providers.map((p) => p.id)).size).toBe(27);
+  it('keeps 29 unique identities, including unsupported historical metadata', () => {
+    expect(providers).toHaveLength(29);
+    expect(new Set(providers.map((p) => p.id)).size).toBe(29);
     for (const id of ['command-goat', 'deepseek', 'opencode', 'opencode-go', 'claude', 'cursor'])
       expect(providerById(id)).toBeDefined();
   });

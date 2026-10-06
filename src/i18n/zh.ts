@@ -36,6 +36,15 @@ export const zh: Record<string, string> = {
     '账号、凭据和用量历史只保存在这台设备上，不会发送到我们的任何服务器。',
   // API relays
   'API relay': '中转站',
+  'Tip the author': '打赏作者',
+  Afdian: '爱发电',
+  Close: '关闭',
+  'OpenAI API Platform': 'OpenAI 开放平台',
+  'Claude API Platform (Anthropic)': 'Claude 开放平台（Anthropic）',
+  "Needs an Admin API key (sk-admin-…) from platform.openai.com > Settings > Admin keys. Shows the organization's spend this month and today.":
+    '需要 Admin API Key（sk-admin-…），在 platform.openai.com 的 Settings > Admin keys 中创建。显示组织本月与今日的花费。',
+  "Needs an Admin API key (sk-ant-admin…) from platform.claude.com > Settings > Admin keys. Shows the organization's spend this month and today.":
+    '需要 Admin API Key（sk-ant-admin…），在 platform.claude.com 的 Settings > Admin keys 中创建。显示组织本月与今日的花费。',
   'This key has no quota limit, so only spending can be shown: no remaining amount and no alerts. Set a quota for this key on the Tokens page of the relay site, then detect again.':
     '这个 Key 没有设置额度上限，只能显示已用金额：无法计算剩余额度，也无法在快用完时提醒你。请到中转站后台的「令牌」页面为该 Key 设置额度上限，然后重新识别。',
   'This key has no quota limit, so only spending can be shown: no remaining amount and no alerts. Set a quota limit for this key in the relay site, then detect again.':

@@ -14,7 +14,8 @@ import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
 import { usePreferences } from '@/providers/preferences';
 import { Button } from '@/ui/controls';
-import { enterItem } from '@/ui/motion';
+import { haptics } from '@/ui/haptics';
+import { enterFade, enterItem, exitFade, layoutShift, PressableScale } from '@/ui/motion';
 import { ACCENT_LABELS } from '@/ui/settings-labels';
 
 const GITHUB_HANDLE = 'nextroad-dev';
@@ -50,7 +51,8 @@ export default function SettingsScreen() {
   const theme = useTheme();
   const accounts = useAccountViews();
   const { settings } = useAlertSettings();
-  const { localeSetting, themeSetting, accentSetting } = usePreferences();
+  const { localeSetting, themeSetting, accentSetting, sponsorDismissed, setSponsorDismissed } =
+    usePreferences();
 
   const language =
     localeSetting === 'system'
@@ -95,47 +97,90 @@ export default function SettingsScreen() {
     <Screen>
       <ScreenHeader title={t('Settings')} />
 
-      {/* sponsor card: the one rounded surface on the page, so it reads as an invitation, not a setting */}
-      <Animated.View
-        entering={enterItem(0)}
-        style={{
-          backgroundColor: theme.backgroundElement,
-          borderColor: theme.border,
-          borderWidth: 1,
-          borderRadius: Radius.control + 4,
-          padding: Spacing.three,
-          gap: Spacing.two,
-        }}
-      >
-        <ThemedText type="smallBold">{t('Support AI Usage')}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('AI Usage is free and has no ads. If it helps you, consider supporting development.')}
-        </ThemedText>
-        <Button title={t('Support on Afdian')} onPress={() => Linking.openURL(SPONSOR_URL)} />
+      {/* sponsor card: the one rounded surface on the page, so it reads as an invitation, not a
+          setting. It can be closed for good; About then keeps a quiet link instead. */}
+      {sponsorDismissed ? null : (
+        <Animated.View
+          entering={enterItem(0)}
+          exiting={exitFade}
+          layout={layoutShift}
+          style={{
+            backgroundColor: theme.backgroundElement,
+            borderColor: theme.border,
+            borderWidth: 1,
+            borderRadius: Radius.control + 4,
+            padding: Spacing.three,
+            gap: Spacing.two,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
+            <ThemedText type="smallBold" style={{ flex: 1 }}>
+              {t('Support AI Usage')}
+            </ThemedText>
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={t('Close')}
+              hitSlop={10}
+              scaleTo={0.85}
+              onPress={() => {
+                haptics.tap();
+                setSponsorDismissed(true);
+              }}
+              style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <SymbolView
+                name={{ ios: 'xmark', android: 'close', web: 'close' }}
+                size={14}
+                weight="semibold"
+                tintColor={theme.textSecondary}
+              />
+            </PressableScale>
+          </View>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t(
+              'AI Usage is free and has no ads. If it helps you, consider supporting development.',
+            )}
+          </ThemedText>
+          <Button title={t('Support on Afdian')} onPress={() => Linking.openURL(SPONSOR_URL)} />
+        </Animated.View>
+      )}
+
+      <Animated.View layout={layoutShift}>
+        <Section title={t('General')}>
+          {menu.map((m, i) => (
+            <Animated.View key={m.title} entering={enterItem(i + 1)}>
+              <Row
+                leading={<MenuIcon name={m.icon} />}
+                title={m.title}
+                value={m.value}
+                onPress={() => router.push(m.href)}
+              />
+            </Animated.View>
+          ))}
+        </Section>
       </Animated.View>
 
-      <Section title={t('General')}>
-        {menu.map((m, i) => (
-          <Animated.View key={m.title} entering={enterItem(i + 1)}>
-            <Row
-              leading={<MenuIcon name={m.icon} />}
-              title={m.title}
-              value={m.value}
-              onPress={() => router.push(m.href)}
-            />
-          </Animated.View>
-        ))}
-      </Section>
-
-      <Section title={t('About')}>
-        <Row title={t('Version {version}', { version: Constants.expoConfig?.version ?? '—' })} />
-        <Row
-          title="GitHub"
-          value={GITHUB_HANDLE}
-          accessibilityHint={t('Open in the browser')}
-          onPress={() => Linking.openURL(`${GITHUB_URL}`)}
-        />
-      </Section>
+      <Animated.View layout={layoutShift}>
+        <Section title={t('About')}>
+          <Row title={t('Version {version}', { version: Constants.expoConfig?.version ?? '—' })} />
+          <Row
+            title="GitHub"
+            value={GITHUB_HANDLE}
+            accessibilityHint={t('Open in the browser')}
+            onPress={() => Linking.openURL(`${GITHUB_URL}`)}
+          />
+          {sponsorDismissed ? (
+            <Animated.View entering={enterFade}>
+              <Row
+                title={t('Tip the author')}
+                value={t('Afdian')}
+                accessibilityHint={t('Open in the browser')}
+                onPress={() => Linking.openURL(SPONSOR_URL)}
+              />
+            </Animated.View>
+          ) : null}
+        </Section>
+      </Animated.View>
     </Screen>
   );
 }

@@ -3,6 +3,7 @@ import type { HttpProviderSpec } from '@/core/spec-engine';
 import { clinePlugin } from '@/providers/cline';
 import { codexPlugin, codexSpec } from '@/providers/codex';
 import { copilotPlugin } from '@/providers/copilot';
+import { anthropicPlatformPlugin, openaiPlatformPlugin } from '@/providers/platform-costs';
 import { relayPlugin } from '@/providers/relay';
 import { specs } from '@/providers/specs';
 
@@ -107,6 +108,22 @@ export const providers: ProviderMeta[] = [
     auth: ['apiKey'],
     spec: specs.commandGoat,
     note: 'Experimental endpoint used by the official CLI; it may change.',
+  },
+  {
+    id: 'openai-platform',
+    name: 'OpenAI API Platform',
+    automation: 'plugin',
+    auth: ['apiKey'],
+    plugin: openaiPlatformPlugin(),
+    note: "Needs an Admin API key (sk-admin-…) from platform.openai.com > Settings > Admin keys. Shows the organization's spend this month and today.",
+  },
+  {
+    id: 'anthropic-platform',
+    name: 'Claude API Platform (Anthropic)',
+    automation: 'plugin',
+    auth: ['apiKey'],
+    plugin: anthropicPlatformPlugin(),
+    note: "Needs an Admin API key (sk-ant-admin…) from platform.claude.com > Settings > Admin keys. Shows the organization's spend this month and today.",
   },
   {
     id: 'relay',
