@@ -29,6 +29,10 @@ export const zh: Record<string, string> = {
   'Tap refresh to load usage.': '点击刷新以加载用量。',
   Refresh: '刷新',
   Sponsor: '赞助',
+  'Support AI Usage': '支持 AI Usage',
+  'AI Usage is free and has no ads. If it helps you, consider supporting development.':
+    'AI Usage 免费且没有广告。如果它对你有帮助，欢迎支持开发。',
+  'Support on Afdian': '去爱发电支持',
   Afdian: '爱发电',
   'Search providers': '搜索提供商',
   'No provider matches "{query}".': '没有找到与“{query}”匹配的提供商。',

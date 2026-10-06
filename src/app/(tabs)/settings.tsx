@@ -7,7 +7,7 @@ import { Screen } from '@/components/screen';
 import { Section, Row } from '@/components/section';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
 import {
   useAccountActions,
   useAccountViews,
@@ -15,6 +15,7 @@ import {
   useBackgroundState,
   useNotificationPermission,
 } from '@/data/hooks';
+import { useTheme } from '@/hooks/use-theme';
 import { useT, type LocaleSetting, type ThemeSetting } from '@/i18n';
 import { usePreferences } from '@/providers/preferences';
 import { Button, Segmented } from '@/ui/controls';
@@ -30,6 +31,7 @@ const SPONSOR_URL = 'https://afdian.com/a/nextroad';
 export default function SettingsScreen() {
   const router = useRouter();
   const t = useT();
+  const theme = useTheme();
   const accounts = useAccountViews();
   const views = accounts.data ?? [];
   const actions = useAccountActions();
@@ -58,6 +60,25 @@ export default function SettingsScreen() {
   return (
     <Screen>
       <ScreenHeader title={t('Settings')} />
+
+      {/* sponsor card: the one rounded surface on the page, so it reads as an invitation, not a setting */}
+      <Animated.View
+        entering={enterItem(0)}
+        style={{
+          backgroundColor: theme.backgroundElement,
+          borderColor: theme.border,
+          borderWidth: 1,
+          borderRadius: Radius.control + 4,
+          padding: Spacing.three,
+          gap: Spacing.two,
+        }}
+      >
+        <ThemedText type="smallBold">{t('Support AI Usage')}</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('AI Usage is free and has no ads. If it helps you, consider supporting development.')}
+        </ThemedText>
+        <Button title={t('Support on Afdian')} onPress={() => Linking.openURL(SPONSOR_URL)} />
+      </Animated.View>
 
       <Section title={t('Language & appearance')} bandStyle={{ gap: Spacing.three }}>
         <View style={{ gap: Spacing.two }}>
