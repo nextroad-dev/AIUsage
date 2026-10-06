@@ -1,0 +1,70 @@
+# Unsigned release .ipa for sideloading (no Apple Developer account needed to build).
+# The output must be signed on install, e.g. with Sideloadly or AltStore and a free Apple ID.
+# Run it from the Actions tab ("Run workflow"), or push a tag like v1.0.0.
+name: iOS unsigned IPA
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  ipa:
+    runs-on: macos-26
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # ios/ is generated from app.json and config plugins (Continuous Native Generation)
+      - name: Generate the native project
+        run: npx expo prebuild --platform ios --clean
+
+      - name: Archive without signing
+        run: |
+          ARCHIVE="$RUNNER_TEMP/Usage.xcarchive"
+          xcodebuild archive \
+            -workspace ios/Usage.xcworkspace \
+            -scheme Usage \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$ARCHIVE" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            | tee "$RUNNER_TEMP/xcodebuild.log" | grep -E "error:|warning: .*deprecated|\*\* ARCHIVE" || true
+          test -d "$ARCHIVE/Products/Applications/Usage.app"
+
+      - name: Package the .ipa
+        run: |
+          ARCHIVE="$RUNNER_TEMP/Usage.xcarchive"
+          VERSION=$(node -p "require('./app.json').expo.version")
+          cd "$RUNNER_TEMP"
+          rm -rf Payload && mkdir Payload
+          cp -R "$ARCHIVE/Products/Applications/Usage.app" Payload/
+          zip -qry "Usage-$VERSION-unsigned.ipa" Payload
+          echo "IPA=$RUNNER_TEMP/Usage-$VERSION-unsigned.ipa" >> "$GITHUB_ENV"
+          ls -lh "$RUNNER_TEMP"/*.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Usage-unsigned-ipa
+          path: ${{ env.IPA }}
+          retention-days: 30
+
+      - name: Keep the build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: ${{ runner.temp }}/xcodebuild.log

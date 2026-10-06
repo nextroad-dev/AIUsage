@@ -1,0 +1,99 @@
+{
+  "expo": {
+    "name": "Usage",
+    "slug": "usage",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "usage",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.nextroad-dev.aiusage",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#208AEF",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ],
+      "expo-secure-store",
+      "expo-sqlite",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Usage to use Face ID to lock the app."
+        }
+      ],
+      "expo-background-task",
+      "@preeternal/react-native-cookie-manager",
+      [
+        "expo-widgets",
+        {
+          "groupIdentifier": "group.com.nextroad-dev.aiusage",
+          "widgets": [
+            {
+              "name": "UsageWidget",
+              "displayName": "Usage",
+              "description": "Remaining quota of your AI subscriptions at a glance.",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium",
+                  "accessoryCircular",
+                  "accessoryRectangular",
+                  "accessoryInline"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "platforms": [
+      "ios"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "ExpoWidgetsTarget",
+                  "bundleIdentifier": "com.nextroad-dev.aiusage.ExpoWidgetsTarget",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.com.nextroad-dev.aiusage"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "e0167088-bc54-48ff-8bd2-6890e558666b"
+      }
+    },
+    "android": {
+      "package": "com.nextroad.aiusage",
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
+    }
+  }
+}

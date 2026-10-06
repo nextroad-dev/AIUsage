@@ -1,0 +1,12 @@
+{
+  "name": "usage-probe",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Verify provider usage endpoints and map responses to Meters (no dependencies, Node 20+)",
+  "bin": { "probe": "./probe.mjs" },
+  "scripts": {
+    "probe": "node probe.mjs",
+    "test": "node --test test/mapping.test.mjs"
+  }
+}

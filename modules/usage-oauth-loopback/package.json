@@ -1,0 +1,6 @@
+{
+  "name": "usage-oauth-loopback",
+  "version": "1.0.0",
+  "description": "One-shot loopback callback receiver for browser sign-in.",
+  "private": true
+}
