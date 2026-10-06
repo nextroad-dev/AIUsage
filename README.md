@@ -21,6 +21,7 @@
 
 ## 功能
 
+- **中转站一键接入**：New API、Sub2API、One API 等中转站只需地址和 Key，自动识别站点和余额。
 - **所有订阅一屏看完**：每个账号的每个额度窗口（5 小时、每周、每月、余额）用横条显示已用与剩余，附重置倒计时；最需要注意的账号排在最前面。
 - **用完预测**：按你当前的消耗速度，估算什么时候会用完——如果早于重置就提前告诉你。
 - **订阅与花费**：显示服务商返回的套餐到期 / 续费日；为每个账号填上月费，首页汇总你每月在 AI 订阅上花了多少。
@@ -55,6 +56,7 @@
 | GitHub Copilot | 个人访问令牌（Token） | Premium 请求、Chat、代码补全用量 |
 | OpenRouter | 浏览器登录 / API Key | 额度余额、Key 限额、今日 / 本周 / 本月花费 |
 | Cline | API Key | 额度余额（含组织余额） |
+| **API 中转站**（New API、Sub2API、One API 等） | 站点地址 + API Key | Key 额度、已用、剩余余额 |
 | Kimi Code | API Key | 5 小时窗口、每月额度 |
 | Kimi 开放平台 | API Key | 可用余额 |
 | MiniMax Token Plan | API Key | 5 小时窗口 |
@@ -67,6 +69,7 @@
 
 - **浏览器登录**：在系统浏览器里完成授权，自动回到应用，无需复制任何验证码。
 - **OpenRouter** 浏览器授权会生成一个属于你的 API Key；查看整个账户余额需要 Management Key。
+- **API 中转站**：只需填写站点地址和 Key，点「智能识别」后自动判断程序类型（New API / Sub2API / One API / OpenAI 兼容）、读取站点名称和余额；之后刷新直接使用识别出的方式查询，失效时才重新识别。
 - **暂不支持**：Claude / Claude Code（Anthropic 条款不允许第三方读取用量）、Cursor、OpenCode Zen（暂无可靠的余额接口）。
 
 > 部分服务的用量接口并非官方公开 API，服务商调整后可能暂时失效；遇到问题欢迎提 [Issue](https://github.com/nextroad-dev/aiusage/issues)。

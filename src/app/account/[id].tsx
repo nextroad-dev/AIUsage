@@ -141,7 +141,8 @@ export default function AccountDetailScreen() {
 
   const status = deriveStatus(v);
   const meters = visibleMeters(v.snapshot?.meters ?? []);
-  const providerName = v.meta?.name ?? v.account.providerId;
+  const providerName =
+    v.meta?.id === 'relay' ? v.account.label : (v.meta?.name ?? v.account.providerId);
 
   const confirmRemove = () =>
     Alert.alert(t('Remove this account?'), t('Its credentials and usage history are deleted.'), [

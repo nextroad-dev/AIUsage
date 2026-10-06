@@ -7,7 +7,7 @@ import { Band, Row } from '@/components/section';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useT } from '@/i18n';
-import { isConnectableProvider, providers } from '@/providers/registry';
+import { isConnectableProvider, providers, type ProviderMeta } from '@/providers/registry';
 import { matchProviders } from '@/providers/search';
 import { enterFade, enterItem } from '@/ui/motion';
 import { ProviderIcon } from '@/ui/provider-icon';
@@ -16,7 +16,9 @@ export default function AddAccountScreen() {
   const router = useRouter();
   const t = useT();
   const [query, setQuery] = useState('');
-  const shown = matchProviders(providers.filter(isConnectableProvider), query);
+  const shown = matchProviders(providers.filter(isConnectableProvider), query, (p) => t(p.name));
+  const connectHint = (c: ProviderMeta['connect']) =>
+    c === 'relay' ? t('Site address + API key') : c && c !== 'apiKey' ? t('Sign in') : t('API key');
 
   return (
     <Screen safeTop={false}>
@@ -37,9 +39,9 @@ export default function AddAccountScreen() {
           <Animated.View key={p.id} entering={enterItem(i)}>
             <Row
               leading={<ProviderIcon providerId={p.id} label={p.name} />}
-              title={p.name}
-              hint={p.connect && p.connect !== 'apiKey' ? t('Sign in') : t('API key')}
-              accessibilityHint={p.connect && p.connect !== 'apiKey' ? t('Sign in') : t('API key')}
+              title={t(p.name)}
+              hint={connectHint(p.connect)}
+              accessibilityHint={connectHint(p.connect)}
               onPress={() => router.push(`/add/${p.id}`)}
             />
           </Animated.View>

@@ -30,7 +30,9 @@ export function AccountCard({
   const status = deriveStatus(view);
   const renewal = renewalInfo(view, now, t);
   const meters = visibleMeters(view.snapshot?.meters ?? []);
-  const name = view.meta?.name ?? view.account.providerId;
+  // a relay is known by its own site name, not the generic "API relay"
+  const name =
+    view.meta?.id === 'relay' ? view.account.label : (view.meta?.name ?? view.account.providerId);
   const subtitle = [
     view.account.label !== name ? view.account.label : undefined,
     view.snapshot?.plan ?? view.account.manual?.planName,

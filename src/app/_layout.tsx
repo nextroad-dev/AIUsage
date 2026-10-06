@@ -25,6 +25,7 @@ function ThemedRoot() {
         <Stack.Screen name="account/[id]" options={{ title: t('Details') }} />
         <Stack.Screen name="add/index" options={{ title: t('Add account') }} />
         <Stack.Screen name="add/[providerId]" options={{ title: t('Add account') }} />
+        <Stack.Screen name="add/relay" options={{ title: t('API relay') }} />
       </Stack>
     </ThemeProvider>
   );

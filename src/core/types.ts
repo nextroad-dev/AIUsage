@@ -44,7 +44,14 @@ export type AuthMethod =
   | 'manual';
 
 export type Credential =
-  | { type: 'apiKey'; key: string }
+  | {
+      type: 'apiKey';
+      key: string;
+      /** API relays only: the site the key belongs to */
+      baseUrl?: string;
+      /** API relays only: the recognised relay software, so refreshes skip detection */
+      adapter?: string;
+    }
   | {
       type: 'oauth';
       accessToken: string;

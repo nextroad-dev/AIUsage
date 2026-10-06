@@ -3,11 +3,12 @@ import type { HttpProviderSpec } from '@/core/spec-engine';
 import { clinePlugin } from '@/providers/cline';
 import { codexPlugin, codexSpec } from '@/providers/codex';
 import { copilotPlugin } from '@/providers/copilot';
+import { relayPlugin } from '@/providers/relay';
 import { specs } from '@/providers/specs';
 
 export type Automation = 'spec' | 'plugin' | 'unsupported';
 export type ConnectFlow =
-  'apiKey' | 'codexDevice' | 'codexBrowser' | 'githubDevice' | 'openrouterPkce';
+  'apiKey' | 'codexDevice' | 'codexBrowser' | 'githubDevice' | 'openrouterPkce' | 'relay';
 export type ConnectionAuth = Exclude<AuthMethod, 'manual' | 'webviewSession'>;
 
 export interface ProviderMeta {
@@ -106,6 +107,15 @@ export const providers: ProviderMeta[] = [
     auth: ['apiKey'],
     spec: specs.commandGoat,
     note: 'Experimental endpoint used by the official CLI; it may change.',
+  },
+  {
+    id: 'relay',
+    name: 'API relay',
+    automation: 'plugin',
+    auth: ['apiKey'],
+    plugin: relayPlugin(),
+    connect: 'relay',
+    note: 'New API, Sub2API, One API and other OpenAI-compatible relays: enter the site address and key, the rest is detected.',
   },
   {
     id: 'cline',

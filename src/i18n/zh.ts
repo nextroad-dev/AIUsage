@@ -28,6 +28,33 @@ export const zh: Record<string, string> = {
   'Open this account to sign in again.': '请打开此账号重新登录。',
   'Tap refresh to load usage.': '点击刷新以加载用量。',
   Refresh: '刷新',
+  // API relays
+  'API relay': 'API 中转站',
+  'New API, Sub2API, One API and other OpenAI-compatible relays: enter the site address and key, the rest is detected.':
+    '支持 New API、Sub2API、One API 及其他 OpenAI 兼容中转站：只需填写站点地址和 Key，其余自动识别。',
+  'Site address + API key': '站点地址 + API Key',
+  'Works with New API, Sub2API, One API and other OpenAI-compatible relays. Only the address and key are needed; the software, site name and balance are detected.':
+    '支持 New API、Sub2API、One API 及其他 OpenAI 兼容中转站。只需填写地址和 Key，程序类型、站点名称和余额会自动识别。',
+  'Site address': '站点地址',
+  'Stored in the device Keychain and sent only to this address.':
+    '保存在设备钥匙串中，只会发送到这个地址。',
+  Detect: '智能识别',
+  Detected: '识别结果',
+  'Enter a valid address, e.g. https://api.example.com':
+    '请输入有效地址，例如 https://api.example.com',
+  'Could not reach this address.': '无法连接这个地址。',
+  'Unrecognised software': '未识别的程序',
+  Used: '已使用',
+  Total: '总额度',
+  Unlimited: '不限额',
+  'This site does not expose a balance for this key, so it cannot be tracked.':
+    '该站点没有开放这个 Key 的余额查询，暂时无法追踪。',
+  'The key was rejected.': 'Key 被拒绝。',
+  'Key is valid': 'Key 有效',
+  'Key could not be checked': '无法验证 Key',
+  'OpenAI compatible': '兼容 OpenAI',
+  'Key quota': 'Key 额度',
+  'Key usage': 'Key 用量',
   'Theme color': '主题色',
   Blue: '蓝色',
   Indigo: '靛蓝',
