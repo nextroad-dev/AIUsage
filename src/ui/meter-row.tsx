@@ -7,8 +7,7 @@ import type { Meter } from '@/core/types';
 import { useT } from '@/i18n';
 import type { AccountView } from '@/data/summary';
 import { useTheme } from '@/hooks/use-theme';
-import { forecastText, meterTitle, resetText } from '@/ui/account-card';
-import { useLevelColor } from '@/ui/meter-donut';
+import { forecastText, meterTitle, resetText, useLevelColor } from '@/ui/meter-text';
 import { windowFor, WindowBar } from '@/ui/window-bar';
 
 export function MeterRow({ meter, now, view }: { meter: Meter; now: Date; view?: AccountView }) {

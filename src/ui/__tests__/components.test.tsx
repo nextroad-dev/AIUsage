@@ -5,7 +5,6 @@ import type { AccountView } from '@/data/summary';
 import { setLocale } from '@/i18n';
 import { AccountCard } from '@/ui/account-card';
 import { Button, Field, Segmented } from '@/ui/controls';
-import { MeterDonut } from '@/ui/meter-donut';
 import { MeterRow } from '@/ui/meter-row';
 import { StatusBadge } from '@/ui/status-badge';
 import { defaultColumns } from '@/ui/option-grid';
@@ -65,10 +64,9 @@ describe('AccountCard', () => {
     expect(screen.getByText(/5-hour window/)).toBeTruthy();
     expect(screen.getByText('Resets in 3h 12m')).toBeTruthy();
     expect(screen.getByText(/Weekly/)).toBeTruthy();
-    // every window is drawn as its own donut, with the used share in the hole
-    expect(screen.getAllByRole('progressbar')).toHaveLength(2);
-    expect(screen.getByText('72%')).toBeTruthy();
-    expect(screen.getByText('10%')).toBeTruthy();
+    // every window gets its own bar, with the used and remaining share printed beside it
+    expect(screen.getByText('used 72%')).toBeTruthy();
+    expect(screen.getByText('Remaining 90%')).toBeTruthy();
     expect(screen.queryByText('Login expired')).toBeNull();
   });
 
@@ -92,6 +90,29 @@ describe('AccountCard', () => {
     await render(<AccountCard view={v} now={NOW} onPress={() => {}} />);
     expect(screen.getByText(/Login expired/)).toBeTruthy();
     expect(screen.getByText('Open this account to sign in again.')).toBeTruthy();
+  });
+
+  it('centres a lone title on the icon and hides empty add-on quotas', async () => {
+    const credits: Meter = {
+      id: 'credits',
+      label: 'Credits balance',
+      kind: { type: 'balance', value: 0, unit: 'credits' },
+      scope: { type: 'overall' },
+    };
+    await render(
+      <AccountCard
+        view={view({
+          account: { ...view().account, label: 'GLM Coding Plan (z.ai)' },
+          snapshot: snapshot([pct('weekly', 30), credits]),
+        })}
+        now={NOW}
+        onPress={() => {}}
+      />,
+    );
+    // no empty subtitle line under the name
+    expect(screen.queryByText('')).toBeNull();
+    expect(screen.queryByText(/Credits balance/)).toBeNull();
+    expect(screen.getByText(/Weekly/)).toBeTruthy();
   });
 
   it('labels manual and not-yet-loaded accounts', async () => {
@@ -139,15 +160,7 @@ describe('AccountCard', () => {
   });
 });
 
-describe('MeterRow / MeterDonut / StatusBadge', () => {
-  it('exposes progress to accessibility', async () => {
-    await render(<MeterDonut fraction={0.42} centerText="42%" accessibilityLabel="Weekly 42%" />);
-    expect(
-      screen.getByRole('progressbar', { name: 'Weekly 42%', value: { min: 0, max: 100, now: 42 } }),
-    ).toBeTruthy();
-    expect(screen.getByText('42%')).toBeTruthy();
-  });
-
+describe('MeterRow / StatusBadge', () => {
   it('renders a meter row with amount text and an elapsed reset', async () => {
     const m: Meter = {
       id: 'credits',

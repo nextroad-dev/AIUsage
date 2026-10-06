@@ -8,7 +8,7 @@ import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { formatAgo } from '@/core/format';
-import { usedFraction } from '@/core/meter-utils';
+import { usedFraction, visibleMeters } from '@/core/meter-utils';
 import type { Meter } from '@/core/types';
 import { choiceFor, type OverrideChoice } from '@/alerts/evaluate';
 import {
@@ -140,7 +140,7 @@ export default function AccountDetailScreen() {
   }
 
   const status = deriveStatus(v);
-  const meters = v.snapshot?.meters ?? [];
+  const meters = visibleMeters(v.snapshot?.meters ?? []);
   const providerName = v.meta?.name ?? v.account.providerId;
 
   const confirmRemove = () =>

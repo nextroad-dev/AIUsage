@@ -3,9 +3,9 @@ import {
   deriveStatus,
   sortViews,
   subscriptionTotals,
-  tightCount,
   type AccountView,
 } from '@/data/summary';
+import { visibleMeters } from '@/core/meter-utils';
 import type { Meter, UsageSnapshot } from '@/core/types';
 import type { Health } from '@/db/repos';
 
@@ -105,11 +105,23 @@ describe('sorting and totals', () => {
     ).toEqual({ USD: 120, CNY: 49 });
   });
 
-  it('counts nearly-exhausted meters that have not reset yet', () => {
-    const now = new Date('2026-10-06T12:00:00Z');
-    const v = view('a', {
-      snapshot: snap([pct(90, '2026-10-07T00:00:00Z'), pct(95, '2026-10-05T00:00:00Z'), pct(10)]),
-    });
-    expect(tightCount([v], now)).toBe(1);
+  it('hides empty add-on quotas but never the only meter of an account', () => {
+    const credits: Meter = {
+      id: 'credits',
+      label: 'Credits balance',
+      kind: { type: 'balance', value: 0, unit: 'credits' },
+      scope: { type: 'overall' },
+    };
+    const onDemand: Meter = {
+      id: 'on_demand',
+      label: 'On-demand',
+      kind: { type: 'amount', used: 0, unit: 'USD' },
+      scope: { type: 'overall' },
+    };
+    const window = pct(40);
+    expect(visibleMeters([window, credits, onDemand])).toEqual([window]);
+    expect(visibleMeters([credits])).toEqual([credits]);
+    const funded = { ...credits, kind: { type: 'balance' as const, value: 12, unit: 'credits' } };
+    expect(visibleMeters([window, funded])).toEqual([window, funded]);
   });
 });

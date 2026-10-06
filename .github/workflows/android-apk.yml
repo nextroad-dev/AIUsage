@@ -1,0 +1,51 @@
+# Release .apk that installs directly on Android (no store account needed).
+# Signed with the debug key from the Expo template, so it is for sideloading, not Google Play.
+# Run it from the Actions tab ("Run workflow"), or push a tag like v1.0.0.
+name: Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # android/ is generated from app.json and config plugins (Continuous Native Generation)
+      - name: Generate the native project
+        run: npx expo prebuild --platform android --clean
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build the release APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Name the APK
+        run: |
+          VERSION=$(node -p "require('./app.json').expo.version")
+          cp android/app/build/outputs/apk/release/app-release.apk "AIUsage-$VERSION.apk"
+          echo "APK=AIUsage-$VERSION.apk" >> "$GITHUB_ENV"
+          ls -lh AIUsage-*.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AIUsage-android-apk
+          path: ${{ env.APK }}
+          retention-days: 30

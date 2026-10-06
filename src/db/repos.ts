@@ -341,11 +341,7 @@ export class ManualStateRepo {
 // ---------------- alerts ----------------
 
 export type AlertKind =
-  | 'usage-over'
-  | 'reset-soon-unused'
-  | 'auth-expired'
-  | 'window-reset'
-  | 'renewal-soon';
+  'usage-over' | 'reset-soon-unused' | 'auth-expired' | 'window-reset' | 'renewal-soon';
 
 export interface AlertRule {
   id: string;

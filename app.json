@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Usage",
+    "name": "AI Usage",
     "slug": "usage",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -12,7 +12,8 @@
       "bundleIdentifier": "com.nextroad-dev.aiusage",
       "supportsTablet": false,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleLocalizations": ["en", "zh-Hans"]
       }
     },
     "plugins": [
@@ -30,7 +31,7 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Allow Usage to use Face ID to lock the app."
+          "faceIDPermission": "Allow AI Usage to use Face ID to lock the app."
         }
       ],
       "expo-background-task",
@@ -42,7 +43,7 @@
           "widgets": [
             {
               "name": "UsageWidget",
-              "displayName": "Usage",
+              "displayName": "AI Usage",
               "description": "Remaining quota of your AI subscriptions at a glance.",
               "ios": {
                 "supportedFamilies": [
@@ -56,15 +57,14 @@
             }
           ]
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "platforms": [
-      "ios"
-    ],
+    "platforms": ["ios", "android"],
     "extra": {
       "router": {},
       "eas": {
@@ -76,9 +76,7 @@
                   "targetName": "ExpoWidgetsTarget",
                   "bundleIdentifier": "com.nextroad-dev.aiusage.ExpoWidgetsTarget",
                   "entitlements": {
-                    "com.apple.security.application-groups": [
-                      "group.com.nextroad-dev.aiusage"
-                    ]
+                    "com.apple.security.application-groups": ["group.com.nextroad-dev.aiusage"]
                   }
                 }
               ]
@@ -90,10 +88,7 @@
     },
     "android": {
       "package": "com.nextroad.aiusage",
-      "permissions": [
-        "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT"
-      ]
+      "permissions": ["android.permission.USE_BIOMETRIC", "android.permission.USE_FINGERPRINT"]
     }
   }
 }

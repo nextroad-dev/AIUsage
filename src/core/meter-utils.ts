@@ -60,6 +60,25 @@ export function countdown(resetsAt: string | undefined, now: Date): Countdown | 
   return { ms, label, elapsed: false };
 }
 
+/** True for an add-on quota with nothing in it: a zero balance, or zero spend with no limit. */
+export function isEmptyExtra(m: Meter): boolean {
+  const k = m.kind;
+  if (k.type === 'balance') return k.value === 0;
+  if (k.type === 'amount') return k.used === 0 && !k.limit;
+  return false;
+}
+
+/**
+ * Meters worth showing: empty add-on quotas (e.g. a credits balance of 0 next to the plan
+ * windows) are dropped. A meter that is the account's only one always stays, since then the zero
+ * is the information.
+ */
+export function visibleMeters(meters: Meter[]): Meter[] {
+  if (meters.length <= 1) return meters;
+  const shown = meters.filter((m) => !isEmptyExtra(m));
+  return shown.length > 0 ? shown : meters;
+}
+
 /** The meter to highlight on a card: highest used fraction; meters without a ratio rank last. */
 export function mostConstrained(meters: Meter[]): Meter | undefined {
   let best: Meter | undefined;

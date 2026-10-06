@@ -1,4 +1,4 @@
-import { countdown, usedFraction } from '@/core/meter-utils';
+import { usedFraction } from '@/core/meter-utils';
 import type { UsageSnapshot } from '@/core/types';
 import type { Price } from '@/data/prices';
 import type { Account, Health } from '@/db/repos';
@@ -92,17 +92,4 @@ export function nextRenewal(
     if (!best || at < best.at) best = { view: v, at };
   }
   return best;
-}
-
-/** Number of meters that will reset within 24 h and are above the warn threshold — for the summary line. */
-export function tightCount(views: AccountView[], now: Date): number {
-  let n = 0;
-  for (const v of views) {
-    for (const m of v.snapshot?.meters ?? []) {
-      const f = usedFraction(m);
-      const c = countdown(m.resetsAt, now);
-      if (f !== undefined && f >= 0.85 && (!c || !c.elapsed)) n++;
-    }
-  }
-  return n;
 }

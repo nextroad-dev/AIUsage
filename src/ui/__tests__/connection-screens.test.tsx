@@ -87,7 +87,7 @@ beforeEach(() => {
 describe('connection screens', () => {
   it('only lists implemented OAuth/API-key providers, not manual or Cookie entries', async () => {
     await render(<AddAccountScreen />);
-    for (const name of ['DeepSeek', 'Command Code GOAT', 'OpenCode Go', 'OpenRouter'])
+    for (const name of ['DeepSeek', 'Command Code', 'OpenCode Go', 'OpenRouter'])
       expect(screen.getByText(name)).toBeTruthy();
     for (const name of [
       'Cursor',

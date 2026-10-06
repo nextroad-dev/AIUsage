@@ -1,33 +1,55 @@
-# Usage — AI subscription usage for iOS
+# AI Usage
 
-React Native (Expo) app that shows usage, remaining quota and reset time across AI subscriptions.
+一款查看各家 AI 订阅用量的 iOS / Android 应用（React Native + Expo）：已用多少、还剩多少、什么时候重置，一眼看清。
 
-Connections support **OAuth and API keys only**. Manual recording and Cookie sign-in have been removed; existing manual/session accounts retain read-only history and are not automatically deleted.
+连接方式**只支持 OAuth 与 API Key**。手动记录与 Cookie 登录已移除；以前添加的手动 / Cookie 账号保留只读历史，不会被自动删除。
 
-## Provider connections
+## 功能
 
-12 implemented providers: Codex, GitHub Copilot, Kimi Code, Kimi platform balance, OpenRouter, MiniMax, GLM Coding Plan, Runway (API organization), Poe, **DeepSeek, Command Code GOAT, OpenCode Go**.
+- **用量一览**：每个账号的各个窗口（5 小时、每周、每月、额度余额等）以横条显示已用与剩余，并显示重置倒计时；余额为 0 的附加额度自动隐藏。
+- **用完预测**：按当前消耗速度估算何时用完，早于重置时提示。
+- **订阅管理**：显示服务商返回的套餐到期 / 续费日；可为每个账号填写月费，概览页汇总每月订阅支出。
+- **提醒**：用量超过阈值、窗口重置（额度恢复）、套餐即将到期、登录失效时发送本地通知。
+- **小组件**（iOS）：主屏与锁屏小组件显示最需要关注的账号。
+- **体验**：中英双语（可跟随系统）、浅色 / 深色、全局动画与触觉反馈，尊重系统的「减弱动态效果」。
 
-- **Codex and OpenRouter sign in through the system browser and return to the app by themselves** — no device code and no copied authorization code. This uses a one-shot `127.0.0.1` callback listener (`modules/usage-oauth-loopback`), so it needs a native build. In Expo Go and older builds, Codex falls back to device-code sign-in and OpenRouter to an API key, with a note explaining why.
-- OpenRouter creates a user-controlled API key that stays in Keychain, and account-wide balance requires a management key; ordinary keys show their own usage. Codex keeps working with existing device-code accounts.
-- Command GOAT uses an experimental personal-account endpoint from the official CLI; there is no guessed monthly limit.
-- OpenCode Go displays subscription quota, not Zen wallet balance. **OpenCode Zen is not available to connect** until a reliable API-key/OAuth balance interface is verified.
-- Provider code and fixtures are not proof of live-account/iOS verification; `tools/probe` checks endpoints against real accounts.
+## 支持的服务商
 
-## Develop (Windows is fine)
+ChatGPT / Codex、GitHub Copilot、Kimi Code、Kimi 开放平台余额、OpenRouter、MiniMax、GLM Coding Plan（z.ai）、Runway（API 组织）、Poe、DeepSeek、Command Code、Cline、OpenCode Go。
+
+- **Codex 与 OpenRouter** 通过系统浏览器登录，授权后自动回到应用，无需输入或复制验证码。这依赖本机 `127.0.0.1` 一次性回调模块（`modules/usage-oauth-loopback`，仅 iOS 原生构建包含）。在 Expo Go、旧版本或 Android 上会自动改用替代方式：Codex 使用设备码登录，OpenRouter 使用 API Key，并在页面上说明原因。
+- **OpenRouter** 授权后生成一个由你掌控的 API Key 并存入钥匙串；查看整个账户余额需要 Management Key，普通 Key 只显示自身用量。
+- **Cline** 使用 app.cline.bot → Settings → API Keys 中创建的 API Key，显示额度余额（有活跃组织时显示组织余额）。
+- **Command Code** 使用官方 CLI 的实验性个人接口，不臆测月度上限。
+- **OpenCode Go** 显示订阅额度，不是 Zen 钱包余额；**OpenCode Zen** 在找到可靠的 API Key / OAuth 余额接口前暂不支持。
+- 服务商代码与测试样例不能代替真实账号验证；可用 `tools/probe` 对真实账号检查接口。
+
+## 开发（Windows 即可）
 
 ```bash
 npm install
-npm run check         # typecheck + lint + tests
-npx expo start        # needs a native development build, not Expo Go
+npm run check         # 类型检查 + lint + 测试
+npx expo start        # 启动开发服务器
 ```
 
-Expo Go runs the app without its native extras: browser sign-in (`modules/usage-oauth-loopback`), the Home Screen widget and background refresh need a native build.
+Expo Go 可以运行本应用，但不含原生扩展：浏览器登录回调、主屏小组件与后台刷新需要原生构建。
 
-`tools/probe` verifies provider endpoints against real accounts (see `node tools/probe/probe.mjs list`).
+`tools/probe` 用于对真实账号验证服务商接口（见 `node tools/probe/probe.mjs list`）。
 
-## Unsigned .ipa (no Apple Developer account)
+## 打包
 
-The **iOS unsigned IPA** workflow (`.github/workflows/ios-unsigned.yml`) builds a release `.ipa` without code signing on a GitHub macOS runner. Start it from the Actions tab (*Run workflow*) or by pushing a `v*` tag, then download the `Usage-unsigned-ipa` artifact.
+两个 GitHub Actions 工作流都可以在 Actions 页面点 *Run workflow* 手动触发，或推送 `v*` 标签（如 `v1.0.1`）自动触发，完成后在运行页面底部下载产物。
 
-The file must be signed when it is installed, for example with Sideloadly or AltStore and a free Apple ID. Free signing expires after 7 days, and personal teams cannot use App Groups, so the Home Screen widget shows no data in a sideloaded build.
+### iOS 无签名 IPA（无需 Apple 开发者账号）
+
+`.github/workflows/ios-unsigned.yml` 在 GitHub 的 macOS 机器上编译不签名的 release `.ipa`，产物名为 `AIUsage-unsigned-ipa`。
+
+安装时需要重新签名，例如用 Sideloadly 或 AltStore 配合免费 Apple ID。免费签名 7 天后过期，需要重签；免费账号不能使用 App Group，所以侧载版的主屏小组件不会显示数据。
+
+### Android APK
+
+`.github/workflows/android-apk.yml` 在 GitHub 的 Linux 机器上编译 release `.apk`，产物名为 `AIUsage-android-apk`。它使用 Expo 模板的调试密钥签名，可以直接安装（需允许安装未知来源应用），但不适合上架 Google Play。Android 版没有主屏小组件，浏览器登录会改用上面提到的替代方式。
+
+## 赞助
+
+如果这个应用对你有帮助，欢迎在 [爱发电](https://afdian.com/a/nextroad) 支持开发。

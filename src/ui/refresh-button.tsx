@@ -70,7 +70,12 @@ export function RefreshButton({
       style={styles.button}
     >
       <Animated.View style={spin}>
-        <SymbolView name="arrow.clockwise" size={20} weight="semibold" tintColor={theme.text} />
+        <SymbolView
+          name={{ ios: 'arrow.clockwise', android: 'refresh', web: 'refresh' }}
+          size={20}
+          weight="semibold"
+          tintColor={theme.text}
+        />
       </Animated.View>
     </PressableScale>
   );

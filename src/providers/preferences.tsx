@@ -1,11 +1,5 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { AppState } from 'react-native';
 
 import { getServices } from '@/data/services';
 import { resolveLocale, setLocale, type LocaleSetting, type ThemeSetting } from '@/i18n';
@@ -56,6 +50,15 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, []);
+
+  // "Follow system": pick up a language changed in system settings when the app comes back.
+  useEffect(() => {
+    if (localeSetting !== 'system') return;
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') setLocale(resolveLocale('system'));
+    });
+    return () => sub.remove();
+  }, [localeSetting]);
 
   const setLocaleSetting = useCallback((v: LocaleSetting) => {
     setLocaleState(v);

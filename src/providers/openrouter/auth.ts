@@ -54,7 +54,7 @@ export async function startOpenRouterSignIn(
         url.searchParams.set('code_challenge', codeChallenge);
         url.searchParams.set('code_challenge_method', 'S256');
         url.searchParams.set('state', state);
-        url.searchParams.set('key_label', 'Usage');
+        url.searchParams.set('key_label', 'AI Usage');
         return url.toString();
       },
       exchange: async ({ code, codeVerifier }, signal, deps) => {

@@ -1,7 +1,7 @@
 import { requireOptionalNativeModule } from 'expo';
 import { Platform } from 'react-native';
 
-import { usedFraction } from '@/core/meter-utils';
+import { usedFraction, visibleMeters } from '@/core/meter-utils';
 import type { Meter } from '@/core/types';
 import { sortViews, type AccountView } from '@/data/summary';
 import { t as translate } from '@/i18n';
@@ -40,7 +40,7 @@ export function widgetProps(
     .slice(0, 3)
     .map((v) => ({
       name: v.account.label || v.meta?.name || v.account.providerId,
-      meters: (v.snapshot?.meters ?? [])
+      meters: visibleMeters(v.snapshot?.meters ?? [])
         .map((m) => toWidgetMeter(m, t))
         .map((m) =>
           m.resetsAt !== undefined && m.resetsAt <= at
@@ -53,7 +53,7 @@ export function widgetProps(
     .filter((a) => a.meters.length > 0);
   return {
     accounts,
-    emptyText: t('Open Usage to add an account.'),
+    emptyText: t('Open AI Usage to add an account.'),
     resetsLabel: t('Resets'),
   };
 }

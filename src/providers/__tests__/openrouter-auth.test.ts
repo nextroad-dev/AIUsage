@@ -61,7 +61,7 @@ describe('OpenRouter browser sign-in', () => {
     expect(url.searchParams.get('code_challenge')).toBe(CHALLENGE);
     expect(url.searchParams.get('code_challenge_method')).toBe('S256');
     expect(url.searchParams.get('state')).toBe(STATE);
-    expect(url.searchParams.get('key_label')).toBe('Usage');
+    expect(url.searchParams.get('key_label')).toBe('AI Usage');
     expect(url.searchParams.has('code_verifier')).toBe(false);
   });
 

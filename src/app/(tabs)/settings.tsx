@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { Alert, Linking, View } from 'react-native';
+import { Alert, Linking, Platform, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { Screen } from '@/components/screen';
@@ -25,6 +25,7 @@ import { MultiChips, ToggleRow } from '@/ui/toggles';
 
 const GITHUB_HANDLE = 'nextroad-dev';
 const GITHUB_URL = 'https://github.com/nextroad-dev';
+const SPONSOR_URL = 'https://afdian.com/a/nextroad';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -208,12 +209,18 @@ export default function SettingsScreen() {
           >
             <ThemedText type="small" themeColor="textSecondary">
               {permission.state === 'denied'
-                ? t('Notifications are off. Turn them on in iOS Settings.')
+                ? Platform.OS === 'ios'
+                  ? t('Notifications are off. Turn them on in iOS Settings.')
+                  : t('Notifications are off. Turn them on in system settings.')
                 : t('Allow notifications to get alerts.')}
             </ThemedText>
             <Button
               title={
-                permission.state === 'denied' ? t('Open iOS Settings') : t('Allow notifications')
+                permission.state === 'denied'
+                  ? Platform.OS === 'ios'
+                    ? t('Open iOS Settings')
+                    : t('Open system settings')
+                  : t('Allow notifications')
               }
               onPress={() =>
                 permission.state === 'denied' ? Linking.openSettings() : permission.request()
@@ -248,6 +255,12 @@ export default function SettingsScreen() {
           value={GITHUB_HANDLE}
           accessibilityHint={t('Open in the browser')}
           onPress={() => Linking.openURL(`${GITHUB_URL}`)}
+        />
+        <Row
+          title={t('Sponsor')}
+          value={t('Afdian')}
+          accessibilityHint={t('Open in the browser')}
+          onPress={() => Linking.openURL(SPONSOR_URL)}
         />
       </Section>
     </Screen>

@@ -28,6 +28,10 @@ export const zh: Record<string, string> = {
   'Open this account to sign in again.': '请打开此账号重新登录。',
   'Tap refresh to load usage.': '点击刷新以加载用量。',
   Refresh: '刷新',
+  Sponsor: '赞助',
+  Afdian: '爱发电',
+  'Search providers': '搜索提供商',
+  'No provider matches "{query}".': '没有找到与“{query}”匹配的提供商。',
   'Browser sign-in is not in this build, so a sign-in code is used instead. Install the current development build to sign in through the browser.':
     '当前版本不包含浏览器登录，已改用登录码登录。安装最新的开发版即可使用浏览器登录。',
   'Browser sign-in is not in this build. Use an API key, or install the current development build to sign in through the browser.':
@@ -247,8 +251,9 @@ export const zh: Record<string, string> = {
   'No accounts yet': '还没有账号',
   'Tell me when a login expires': '登录失效时提醒我',
   'Open iOS Settings': '打开系统设置',
+  'Open system settings': '打开系统设置',
+  'Notifications are off. Turn them on in system settings.': '通知已关闭，请在系统设置中开启。',
   'Local storage is unavailable. Restart the app.': '本地存储不可用，请重启 App。',
-  '{n} meters are nearly used up': '{n} 项即将用完',
   'This removes every account, credential and usage history from this device.':
     '将删除本机上的所有账号、凭据与用量历史。',
   'Notifications are off. Turn them on in iOS Settings.': '通知已关闭，请在系统设置中开启。',
@@ -273,6 +278,8 @@ export const zh: Record<string, string> = {
   'Cookie sign-in removed; existing accounts are read-only.':
     '已移除 Cookie 登录，已有账号仅可查看。',
   'No usage connection yet.': '暂不支持自动采集。',
+  'Shows your Cline credits. Create an API key at app.cline.bot under Settings > API Keys.':
+    '显示 Cline 额度余额。请在 app.cline.bot 的 Settings > API Keys 中创建 API Key。',
   // subscriptions, forecasts, reset notices, widget
   '{name}: plan ends or renews {date}': '{name}：套餐将于 {date} 到期或续费',
   'Within a day. Check your subscription if you do not plan to keep it.':
@@ -295,7 +302,7 @@ export const zh: Record<string, string> = {
   'within a day': '不到 1 天',
   '{n} days left': '剩 {n} 天',
   'Plan until {date} · {left}': '套餐有效至 {date} · {left}',
-  'Open Usage to add an account.': '打开 Usage 添加账号。',
+  'Open AI Usage to add an account.': '打开 AI Usage 添加账号。',
   Resets: '重置',
   '5h': '5小时',
   Day: '日',

@@ -8,7 +8,7 @@ import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { formatAmount, formatDate } from '@/core/format';
-import { nextRenewal, sortViews, subscriptionTotals, tightCount } from '@/data/summary';
+import { nextRenewal, sortViews, subscriptionTotals } from '@/data/summary';
 import { useAccountViews, useNow, useRefreshAll, useServices } from '@/data/hooks';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
@@ -35,7 +35,6 @@ export default function OverviewScreen() {
   }, [ready, mutate]);
 
   const list = sortViews(views.data ?? []);
-  const tight = tightCount(list, now);
   const totals = Object.entries(subscriptionTotals(list));
   const renewal = nextRenewal(list, now);
   const loading = views.isLoading && list.length === 0;
@@ -83,15 +82,6 @@ export default function OverviewScreen() {
               })}
             </ThemedText>
           ) : null}
-        </Band>
-      ) : null}
-
-      {tight > 0 ? (
-        <Band entering={enterFade} exiting={exitFade} layout={layoutShift}>
-          <ThemedText type="small" style={{ color: theme.warn }}>
-            {'▲ '}
-            {t('{n} meters are nearly used up', { n: tight })}
-          </ThemedText>
         </Band>
       ) : null}
 

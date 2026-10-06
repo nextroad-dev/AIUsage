@@ -32,33 +32,36 @@ jobs:
 
       - name: Archive without signing
         run: |
-          ARCHIVE="$RUNNER_TEMP/Usage.xcarchive"
+          # the project is named after app.json "name" without spaces ("AI Usage" -> AIUsage)
+          WORKSPACE=$(ls -d ios/*.xcworkspace | head -1)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          ARCHIVE="$RUNNER_TEMP/App.xcarchive"
           xcodebuild archive \
-            -workspace ios/Usage.xcworkspace \
-            -scheme Usage \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath "$ARCHIVE" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            | tee "$RUNNER_TEMP/xcodebuild.log" | grep -E "error:|warning: .*deprecated|\*\* ARCHIVE" || true
-          test -d "$ARCHIVE/Products/Applications/Usage.app"
+            | tee "$RUNNER_TEMP/xcodebuild.log" | grep -E "error:|\*\* ARCHIVE" || true
+          ls -d "$ARCHIVE"/Products/Applications/*.app
 
       - name: Package the .ipa
         run: |
-          ARCHIVE="$RUNNER_TEMP/Usage.xcarchive"
+          ARCHIVE="$RUNNER_TEMP/App.xcarchive"
           VERSION=$(node -p "require('./app.json').expo.version")
           cd "$RUNNER_TEMP"
           rm -rf Payload && mkdir Payload
-          cp -R "$ARCHIVE/Products/Applications/Usage.app" Payload/
-          zip -qry "Usage-$VERSION-unsigned.ipa" Payload
-          echo "IPA=$RUNNER_TEMP/Usage-$VERSION-unsigned.ipa" >> "$GITHUB_ENV"
+          cp -R "$ARCHIVE"/Products/Applications/*.app Payload/
+          zip -qry "AIUsage-$VERSION-unsigned.ipa" Payload
+          echo "IPA=$RUNNER_TEMP/AIUsage-$VERSION-unsigned.ipa" >> "$GITHUB_ENV"
           ls -lh "$RUNNER_TEMP"/*.ipa
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Usage-unsigned-ipa
+          name: AIUsage-unsigned-ipa
           path: ${{ env.IPA }}
           retention-days: 30
 

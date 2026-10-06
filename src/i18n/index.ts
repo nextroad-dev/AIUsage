@@ -1,3 +1,4 @@
+import { getLocales } from 'expo-localization';
 import { useEffect, useMemo, useReducer } from 'react';
 
 import { zh } from '@/i18n/zh';
@@ -24,10 +25,25 @@ export type LocaleSetting = 'system' | Locale;
 /** User-facing appearance choice. `system` follows the OS color scheme. */
 export type ThemeSetting = 'system' | 'light' | 'dark';
 
+/**
+ * The first supported language in the user's device order. `Intl` is not enough on iOS: it reports
+ * the app's resolved locale, which falls back to English unless the bundle declares Chinese, so a
+ * Chinese device looked English. expo-localization reads the system preference list instead.
+ */
 export function systemLocale(): Locale {
   try {
-    const l = Intl.DateTimeFormat().resolvedOptions().locale.toLowerCase();
-    return l.startsWith('zh') ? 'zh' : 'en';
+    for (const l of getLocales()) {
+      const code = (l.languageCode ?? l.languageTag ?? '').toLowerCase();
+      if (code.startsWith('zh')) return 'zh';
+      if (code.startsWith('en')) return 'en';
+    }
+  } catch {
+    // native module unavailable (tests, old builds): fall through
+  }
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().locale.toLowerCase().startsWith('zh')
+      ? 'zh'
+      : 'en';
   } catch {
     return 'en';
   }

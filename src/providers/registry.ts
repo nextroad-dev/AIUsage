@@ -1,5 +1,6 @@
 import type { AuthMethod, Credential, ProviderPlugin } from '@/core/types';
 import type { HttpProviderSpec } from '@/core/spec-engine';
+import { clinePlugin } from '@/providers/cline';
 import { codexPlugin, codexSpec } from '@/providers/codex';
 import { copilotPlugin } from '@/providers/copilot';
 import { specs } from '@/providers/specs';
@@ -100,11 +101,19 @@ export const providers: ProviderMeta[] = [
   { id: 'deepseek', name: 'DeepSeek', automation: 'spec', auth: ['apiKey'], spec: specs.deepseek },
   {
     id: 'command-goat',
-    name: 'Command Code GOAT',
+    name: 'Command Code',
     automation: 'spec',
     auth: ['apiKey'],
     spec: specs.commandGoat,
     note: 'Experimental endpoint used by the official CLI; it may change.',
+  },
+  {
+    id: 'cline',
+    name: 'Cline',
+    automation: 'plugin',
+    auth: ['apiKey'],
+    plugin: clinePlugin(),
+    note: 'Shows your Cline credits. Create an API key at app.cline.bot under Settings > API Keys.',
   },
   {
     id: 'opencode-go',
