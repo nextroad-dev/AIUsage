@@ -277,12 +277,6 @@ export default function SettingsScreen() {
           accessibilityHint={t('Open in the browser')}
           onPress={() => Linking.openURL(`${GITHUB_URL}`)}
         />
-        <Row
-          title={t('Sponsor')}
-          value={t('Afdian')}
-          accessibilityHint={t('Open in the browser')}
-          onPress={() => Linking.openURL(SPONSOR_URL)}
-        />
       </Section>
     </Screen>
   );
