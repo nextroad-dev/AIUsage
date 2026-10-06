@@ -26,6 +26,7 @@ import { meterTitle, renewalInfo } from '@/ui/account-card';
 import { Button, Field, Segmented } from '@/ui/controls';
 import { haptics } from '@/ui/haptics';
 import { MeterRow } from '@/ui/meter-row';
+import { unlimitedKeyHint } from '@/ui/relay-hints';
 import { RefreshButton } from '@/ui/refresh-button';
 import { enterFade, enterItem, exitFade, layoutShift } from '@/ui/motion';
 import { ProviderIcon } from '@/ui/provider-icon';
@@ -236,7 +237,16 @@ export default function AccountDetailScreen() {
       </Band>
 
       {meters.length > 0 && (
-        <Section title={t('Meters')}>
+        <Section
+          title={t('Meters')}
+          footer={
+            // a relay key without a ceiling only reports spending: explain how to get the rest
+            v.account.providerId === 'relay' &&
+            meters.some((m) => m.kind.type === 'amount' && m.kind.limit === undefined)
+              ? unlimitedKeyHint(v.snapshot?.plan === 'New API' ? 'new-api' : 'unknown', t)
+              : undefined
+          }
+        >
           {meters.map((m, i) => (
             <Animated.View key={keyOf(m)} entering={enterItem(i)}>
               <MeterRow meter={m} now={now} view={v} />

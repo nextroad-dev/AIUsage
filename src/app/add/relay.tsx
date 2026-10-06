@@ -21,6 +21,7 @@ import {
   type RelayInspection,
 } from '@/providers/relay/inspect';
 import { Button, Field } from '@/ui/controls';
+import { unlimitedKeyHint } from '@/ui/relay-hints';
 import { haptics } from '@/ui/haptics';
 import { enterFade, enterItem, exitFade, layoutShift } from '@/ui/motion';
 
@@ -218,6 +219,16 @@ export default function AddRelayScreen() {
                 {t('This site does not expose a balance for this key, so it cannot be tracked.')}
               </ThemedText>
             )}
+
+            {/* an unlimited key has no ceiling to measure against: say how to set one */}
+            {b?.supported && b.unlimited ? (
+              <Animated.View entering={enterItem(2)}>
+                <ThemedText type="small" style={{ color: theme.warn }}>
+                  {'▲ '}
+                  {unlimitedKeyHint(result.provider.type, t)}
+                </ThemedText>
+              </Animated.View>
+            ) : null}
 
             <Animated.View entering={enterItem(2)}>
               <ThemedText

@@ -28,8 +28,18 @@ export const zh: Record<string, string> = {
   'Open this account to sign in again.': '请打开此账号重新登录。',
   'Tap refresh to load usage.': '点击刷新以加载用量。',
   Refresh: '刷新',
+  General: '通用',
+  On: '开启',
+  Account: '账号',
+  Background: '后台',
+  'Accounts, credentials and usage history live only on this device. Nothing is sent to any server of ours.':
+    '账号、凭据和用量历史只保存在这台设备上，不会发送到我们的任何服务器。',
   // API relays
-  'API relay': 'API 中转站',
+  'API relay': '中转站',
+  'This key has no quota limit, so only spending can be shown: no remaining amount and no alerts. Set a quota for this key on the Tokens page of the relay site, then detect again.':
+    '这个 Key 没有设置额度上限，只能显示已用金额：无法计算剩余额度，也无法在快用完时提醒你。请到中转站后台的「令牌」页面为该 Key 设置额度上限，然后重新识别。',
+  'This key has no quota limit, so only spending can be shown: no remaining amount and no alerts. Set a quota limit for this key in the relay site, then detect again.':
+    '这个 Key 没有设置额度上限，只能显示已用金额：无法计算剩余额度，也无法在快用完时提醒你。请到中转站后台为该 Key 设置额度上限，然后重新识别。',
   'Price currency': '月费货币',
   'New API, Sub2API, One API and other OpenAI-compatible relays: enter the site address and key, the rest is detected.':
     '支持 New API、Sub2API、One API 及其他 OpenAI 兼容中转站：只需填写站点地址和 Key，其余自动识别。',
