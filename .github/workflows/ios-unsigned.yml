@@ -69,12 +69,24 @@ jobs:
           retention-days: 30
 
       # a v* tag publishes a GitHub Release; the Android workflow attaches its .apk to the same one
+      # release notes = this version's changelog (.github/changes/<tag>.md) + the install guide
+      - name: Compose release notes
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          {
+            if [ -f ".github/changes/${GITHUB_REF_NAME}.md" ]; then
+              cat ".github/changes/${GITHUB_REF_NAME}.md"
+              echo
+            fi
+            cat .github/release-notes.md
+          } > "$RUNNER_TEMP/release-notes.md"
+
       - name: Attach to the GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           name: AI Usage ${{ github.ref_name }}
-          body_path: .github/release-notes.md
+          body_path: ${{ runner.temp }}/release-notes.md
           files: ${{ env.IPA }}
 
       - name: Keep the build log on failure

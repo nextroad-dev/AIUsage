@@ -107,7 +107,7 @@ npx expo start        # 启动开发服务器
 
 - Expo Go 可以运行本应用，但浏览器登录回调、主屏小组件和后台刷新需要原生构建。
 - `tools/probe` 可用真实账号验证服务商接口（`node tools/probe/probe.mjs list`）。
-- 推送 `v*` 标签（如 `v1.0.3`）会通过 GitHub Actions 自动构建 Android APK 与未签名 iOS IPA，并发布到 Releases。
+- 推送 `v*` 标签（如 `v1.0.3`）会通过 GitHub Actions 自动构建 Android APK 与未签名 iOS IPA，并发布到 Releases。发布前先在 `.github/changes/<标签>.md` 写好该版本的更新日志，并同步修改 `app.json` 中的 `version`；Release 说明会自动拼接更新日志与安装指南。
 
 ## 赞助
 
