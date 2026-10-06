@@ -51,7 +51,7 @@
 
 | 服务 | 连接方式 | 显示内容 |
 |---|---|---|
-| ChatGPT / Codex | 浏览器登录（备用：设备码） | 5 小时窗口、每周窗口、额度余额、套餐有效期 |
+| ChatGPT / Codex | 浏览器登录 | 5 小时窗口、每周窗口、额度余额、套餐有效期 |
 | GitHub Copilot | 个人访问令牌（Token） | Premium 请求、Chat、代码补全用量 |
 | OpenRouter | 浏览器登录 / API Key | 额度余额、Key 限额、今日 / 本周 / 本月花费 |
 | Cline | API Key | 额度余额（含组织余额） |
@@ -66,7 +66,6 @@
 | OpenCode Go | API Key | Go 订阅额度 |
 
 - **浏览器登录**：在系统浏览器里完成授权，自动回到应用，无需复制任何验证码。
-- **Codex 设备码登录**需要先在 ChatGPT「设置 → 安全」中开启设备码登录。
 - **OpenRouter** 浏览器授权会生成一个属于你的 API Key；查看整个账户余额需要 Management Key。
 - **暂不支持**：Claude / Claude Code（Anthropic 条款不允许第三方读取用量）、Cursor、OpenCode Zen（暂无可靠的余额接口）。
 
@@ -87,9 +86,6 @@
 
 **「按当前速度约 X 后用完」准吗？**
 它按本周期内的平均消耗速度线性估算，适合判断「今天会不会被限流」，不代表精确时间。
-
-**为什么提示「当前版本不包含浏览器登录」？**
-你在 Expo Go 或旧版本中运行。此时 Codex 会改用设备码登录，OpenRouter 改用 API Key；安装最新版即可使用浏览器登录。
 
 ## 参与开发
 
