@@ -100,18 +100,26 @@ function SubscriptionSection({
         placeholder={t('Optional')}
         hint={t('Used for the monthly total on the overview.')}
       />
-      <Segmented<Price['currency']>
-        label={t('Currency')}
-        options={[
-          { value: 'USD', label: 'USD $' },
-          { value: 'CNY', label: 'CNY ¥' },
-        ]}
-        value={currency}
-        onChange={(c) => {
-          setCurrency(c);
-          if (amount.trim()) commit(c);
-        }}
-      />
+      {/* the currency belongs to the price: offered once there is a price to save it with */}
+      {amount.trim() ? (
+        <Animated.View entering={enterFade} exiting={exitFade} style={{ gap: Spacing.two }}>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('Price currency')}
+          </ThemedText>
+          <Segmented<Price['currency']>
+            label={t('Price currency')}
+            options={[
+              { value: 'USD', label: 'USD $' },
+              { value: 'CNY', label: 'CNY ¥' },
+            ]}
+            value={currency}
+            onChange={(c) => {
+              setCurrency(c);
+              commit(c);
+            }}
+          />
+        </Animated.View>
+      ) : null}
     </Section>
   );
 }

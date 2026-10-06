@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
-import { RefreshControl, ScrollView, StyleSheet } from 'react-native';
+import { RefreshControl, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { KeyboardAwareScrollView } from '@/components/keyboard';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { haptics } from '@/ui/haptics';
@@ -24,7 +25,9 @@ export function Screen({
         style={styles.safe}
         edges={safeTop ? ['top', 'left', 'right'] : ['left', 'right']}
       >
-        <ScrollView
+        {/* a focused field always scrolls clear of the keyboard, with a little breathing room */}
+        <KeyboardAwareScrollView
+          bottomOffset={Spacing.four}
           contentContainerStyle={styles.content}
           contentInsetAdjustmentBehavior="automatic"
           keyboardShouldPersistTaps="handled"
@@ -41,7 +44,7 @@ export function Screen({
           }
         >
           {children}
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
     </ThemedView>
   );

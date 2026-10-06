@@ -3,6 +3,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { useState } from 'react';
 
 import { AppLifecycle } from '@/components/app-lifecycle';
+import { KeyboardProvider } from '@/components/keyboard';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useT } from '@/i18n';
 import { PreferencesProvider } from '@/providers/preferences';
@@ -36,7 +37,9 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <PreferencesProvider>
-        <ThemedRoot />
+        <KeyboardProvider>
+          <ThemedRoot />
+        </KeyboardProvider>
       </PreferencesProvider>
     </QueryClientProvider>
   );

@@ -2,6 +2,7 @@ import { AuthExpiredError } from '@/core/errors';
 import { relayMeters, relayPlugin } from '@/providers/relay';
 import {
   htmlTitle,
+  newApiDisplay,
   inspectProvider,
   normalizeBaseUrl,
   refreshBilling,
@@ -134,6 +135,54 @@ describe('relay inspection', () => {
     // each path is requested once, however many adapters look at it
     const urls = f.calls.map((c) => c.url);
     expect(new Set(urls).size).toBe(urls.length);
+  });
+});
+
+describe('New API display currency', () => {
+  it('shows the balance in the currency the site is configured for', async () => {
+    const r = await inspect(
+      at({
+        ...newApiSite,
+        '/api/status': {
+          json: {
+            success: true,
+            data: {
+              system_name: 'CN Relay',
+              quota_per_unit: 500_000,
+              quota_display_type: 'CNY',
+              usd_exchange_rate: 7.3,
+            },
+          },
+        },
+      }),
+    );
+    // $16.58 at 7.3 CNY per USD
+    expect(r.billing).toMatchObject({ currency: 'CNY', remaining: 121.034, total: 146 });
+  });
+
+  it('covers custom symbols, raw tokens, the legacy flag and missing rates', () => {
+    expect(newApiDisplay({ quota_per_unit: 500_000 })).toEqual({
+      currency: 'USD',
+      factor: 0.000002,
+    });
+    expect(
+      newApiDisplay({
+        quota_per_unit: 500_000,
+        quota_display_type: 'CUSTOM',
+        custom_currency_symbol: '点',
+        custom_currency_exchange_rate: 10,
+      }),
+    ).toEqual({ currency: '点', factor: 0.00002 });
+    expect(newApiDisplay({ quota_display_type: 'TOKENS' })).toEqual({
+      currency: 'tokens',
+      factor: 1,
+    });
+    expect(newApiDisplay({ display_in_currency: false })).toEqual({
+      currency: 'tokens',
+      factor: 1,
+    });
+    // CNY without a rate cannot be converted honestly
+    expect(newApiDisplay({ quota_display_type: 'CNY' }).currency).toBe('USD');
   });
 });
 

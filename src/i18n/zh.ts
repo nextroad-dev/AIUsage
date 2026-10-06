@@ -30,6 +30,7 @@ export const zh: Record<string, string> = {
   Refresh: '刷新',
   // API relays
   'API relay': 'API 中转站',
+  'Price currency': '月费货币',
   'New API, Sub2API, One API and other OpenAI-compatible relays: enter the site address and key, the rest is detected.':
     '支持 New API、Sub2API、One API 及其他 OpenAI 兼容中转站：只需填写站点地址和 Key，其余自动识别。',
   'Site address + API key': '站点地址 + API Key',

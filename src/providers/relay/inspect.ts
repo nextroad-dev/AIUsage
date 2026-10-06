@@ -192,21 +192,53 @@ const newApi: RelayAdapter = {
     ]);
     const d = dataOf(token);
     if (!d || d.object !== 'token_usage') return oneApi.billing(ctx);
-    const perUnit = num(dataOf(status)?.quota_per_unit) || DEFAULT_QUOTA_PER_UNIT;
+    const s = dataOf(status);
+    const display = newApiDisplay(s);
     const unlimited = d.unlimited_quota === true;
     const granted = num(d.total_granted);
     const used = num(d.total_used);
     const available = num(d.total_available);
+    const conv = (q: number | undefined) =>
+      q === undefined ? undefined : round(q * display.factor);
     return {
       supported: used !== undefined || available !== undefined,
-      currency: 'USD',
+      currency: display.currency,
       unlimited,
-      total: unlimited || granted === undefined ? undefined : round(granted / perUnit),
-      used: used === undefined ? undefined : round(used / perUnit),
-      remaining: unlimited || available === undefined ? undefined : round(available / perUnit),
+      total: unlimited ? undefined : conv(granted),
+      used: conv(used),
+      remaining: unlimited ? undefined : conv(available),
     };
   },
 };
+
+/**
+ * How the site itself shows quota (New API `/api/status`): USD by default, CNY at the site's
+ * `usd_exchange_rate`, a custom symbol at `custom_currency_exchange_rate`, or raw tokens. Older
+ * versions only have `display_in_currency`. Returns the multiplier from raw quota units.
+ */
+export function newApiDisplay(s: Obj | undefined): { currency: string; factor: number } {
+  const perUnit = num(s?.quota_per_unit) || DEFAULT_QUOTA_PER_UNIT;
+  const usd = 1 / perUnit;
+  const type =
+    str(s?.quota_display_type)?.toUpperCase() ??
+    (s?.display_in_currency === false ? 'TOKENS' : 'USD');
+  if (type === 'TOKENS') return { currency: 'tokens', factor: 1 };
+  if (type === 'CNY') {
+    const rate = num(s?.usd_exchange_rate);
+    // without a rate the CNY figure cannot be derived; stay truthful in dollars
+    return rate && rate > 0
+      ? { currency: 'CNY', factor: rate / perUnit }
+      : { currency: 'USD', factor: usd };
+  }
+  if (type === 'CUSTOM') {
+    const rate = num(s?.custom_currency_exchange_rate);
+    const symbol = str(s?.custom_currency_symbol);
+    return rate && rate > 0 && symbol
+      ? { currency: symbol, factor: rate / perUnit }
+      : { currency: 'USD', factor: usd };
+  }
+  return { currency: 'USD', factor: usd };
+}
 
 const sub2api: RelayAdapter = {
   type: 'sub2api',
