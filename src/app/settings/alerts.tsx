@@ -107,7 +107,7 @@ export default function AlertSettingsScreen() {
             <Animated.View layout={layoutShift}>
               <ToggleRow
                 label={t('Tell me when a window resets')}
-                hint={t('Only for windows that were nearly used up.')}
+                hint={t('Only for windows that were used up.')}
                 value={settings.windowReset}
                 onChange={(v) => update({ windowReset: v })}
               />

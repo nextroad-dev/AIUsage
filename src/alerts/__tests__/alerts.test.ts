@@ -213,16 +213,21 @@ describe('window-reset rule', () => {
     rules: AlertRule[] = [],
   ) => run(views, { windowReset: true, ...over }, rules).filter((e) => e.kind === 'window-reset');
 
-  it('schedules a "quota is back" notice at the reset of a nearly used-up window', () => {
-    const [e] = resets([view([pct('session', 90, inHours(2))])]);
+  it('schedules a "quota is back" notice at the reset of a used-up window', () => {
+    const [e] = resets([view([pct('session', 100, inHours(2))])]);
     expect(e.at).toBe(NOW.getTime() + 2 * 3_600_000);
     expect(e.title).toBe('GLM · Work: 5-hour window has reset');
     expect(e.ruleId).toBe('a|session|window-reset');
   });
 
-  it('stays quiet for windows with room left, when turned off, or when the meter is muted', () => {
-    expect(resets([view([pct('session', 40, inHours(2))])])).toEqual([]);
-    expect(resets([view([pct('session', 90, inHours(2))])], { windowReset: false })).toEqual([]);
+  it('counts a window that reads as 100% as used up', () => {
+    expect(resets([view([pct('session', 99.6, inHours(2))])])).toHaveLength(1);
+  });
+
+  it('stays quiet for unused or not yet used-up windows, when turned off, or when muted', () => {
+    expect(resets([view([pct('session', 0, inHours(2))])])).toEqual([]);
+    expect(resets([view([pct('session', 90, inHours(2))])])).toEqual([]);
+    expect(resets([view([pct('session', 100, inHours(2))])], { windowReset: false })).toEqual([]);
     const off: AlertRule = {
       id: 'o',
       accountId: 'a',
@@ -231,7 +236,7 @@ describe('window-reset rule', () => {
       threshold: 1,
       enabled: false,
     };
-    expect(resets([view([pct('session', 90, inHours(2))])], {}, [off])).toEqual([]);
+    expect(resets([view([pct('session', 100, inHours(2))])], {}, [off])).toEqual([]);
   });
 });
 
@@ -284,14 +289,24 @@ describe('dispatchAlerts', () => {
     await migrate(db);
     const repos = createRepos(db);
     const sent: AlertEvent[] = [];
+    // pending scheduled notifications, by identifier, as the OS would keep them
+    const pending = new Set<string>();
     const notifier: Notifier = {
       permission: async () => permission,
       send: async (e) => {
         if (failSend) throw new Error('os refused');
         sent.push(e);
+        if (e.at !== undefined) pending.add(e.ruleId);
       },
+      scheduled: async () => [...pending],
+      cancel: async (id) => void pending.delete(id),
     };
-    return { repos, sent, deps: { alerts: repos.alerts, notifier, now: () => NOW.getTime() } };
+    return {
+      repos,
+      sent,
+      pending,
+      deps: { alerts: repos.alerts, notifier, now: () => NOW.getTime() },
+    };
   }
 
   const event = (over: Partial<AlertEvent> = {}): AlertEvent => ({
@@ -352,6 +367,20 @@ describe('dispatchAlerts', () => {
     expect((await dispatchAlerts([timed], s.deps)).sent).toBe(1);
     expect(await s.repos.alerts.hasFired(timed.ruleId, timed.cycleKey)).toBe(false);
     expect((await dispatchAlerts([{ ...timed, at: NOW.getTime() - 1 }], s.deps)).sent).toBe(0);
+  });
+
+  it('withdraws a scheduled reset notice once no event asks for it', async () => {
+    const s = await setup();
+    const timed = (ruleId: string) =>
+      event({ kind: 'window-reset', ruleId, at: NOW.getTime() + 60_000 });
+    await dispatchAlerts([timed('a|session|window-reset'), timed('b|weekly|window-reset')], s.deps);
+    expect([...s.pending].sort()).toEqual(['a|session|window-reset', 'b|weekly|window-reset']);
+    // account b's window is no longer used up (or b was removed): only a's notice stays
+    await dispatchAlerts([timed('a|session|window-reset')], s.deps);
+    expect([...s.pending]).toEqual(['a|session|window-reset']);
+    // alerts turned off: nothing is asked for, so nothing stays scheduled
+    await dispatchAlerts([], s.deps);
+    expect([...s.pending]).toEqual([]);
   });
 
   it('does nothing for an empty list without asking for permission', async () => {

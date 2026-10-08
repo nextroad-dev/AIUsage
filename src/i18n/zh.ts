@@ -371,7 +371,7 @@ export const zh: Record<string, string> = {
   'Subscriptions per month': '每月订阅合计',
   'Next plan end: {name} · {date}': '最近到期：{name} · {date}',
   'Tell me when a window resets': '窗口重置时通知我',
-  'Only for windows that were nearly used up.': '仅限即将用完的窗口。',
+  'Only for windows that were used up.': '仅限额度已用完的窗口。',
   'Remind me before a plan ends': '套餐到期前提醒我',
   '{n} days before': '提前 {n} 天',
   Subscription: '订阅',

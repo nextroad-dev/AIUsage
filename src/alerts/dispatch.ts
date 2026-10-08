@@ -10,6 +10,28 @@ export interface Notifier {
    * `at` are scheduled for that time, replacing a pending one with the same `ruleId`.
    */
   send(event: AlertEvent): Promise<void>;
+  /** identifiers of notifications scheduled for later and not delivered yet */
+  scheduled(): Promise<string[]>;
+  /** withdraws a scheduled notification; unknown identifiers are ignored */
+  cancel(id: string): Promise<void>;
+}
+
+const isTimed = (id: string) => id.endsWith('|window-reset');
+
+/**
+ * A scheduled "window has reset" notice stays only while an event still asks for it. One whose
+ * window is no longer used up, whose account is gone, or whose setting was turned off is
+ * withdrawn, so a quiet subscription never gets a reset notice. Never throws.
+ */
+async function withdrawStale(events: AlertEvent[], notifier: Notifier): Promise<void> {
+  try {
+    const wanted = new Set(events.filter((e) => e.at !== undefined).map((e) => e.ruleId));
+    for (const id of await notifier.scheduled()) {
+      if (isTimed(id) && !wanted.has(id)) await notifier.cancel(id).catch(() => undefined);
+    }
+  } catch {
+    // tried again on the next cycle
+  }
 }
 
 /**
@@ -23,6 +45,7 @@ export async function dispatchAlerts(
 ): Promise<{ sent: number; skipped: number }> {
   let sent = 0;
   let skipped = 0;
+  await withdrawStale(events, deps.notifier);
   if (events.length === 0) return { sent, skipped };
   const permission = await deps.notifier.permission();
 
