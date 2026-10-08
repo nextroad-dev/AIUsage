@@ -50,24 +50,17 @@ export function AccountCard({
       scaleTo={0.985}
     >
       <View style={styles.content}>
-        {/* one line: logo, name, and the plan on the right, all centred on the same axis */}
+        {/* One column keeps names, plans and status readable with large fonts. */}
         <View style={styles.header}>
           <ProviderIcon providerId={view.account.providerId} label={name} size={24} />
-          <ThemedText type="smallBold" numberOfLines={1} style={styles.name}>
-            {name}
-          </ThemedText>
+          <ThemedText type="smallBold">{name}</ThemedText>
           {subtitle ? (
-            <ThemedText
-              type="small"
-              themeColor="textSecondary"
-              numberOfLines={1}
-              style={styles.subtitle}
-            >
+            <ThemedText type="small" themeColor="textSecondary">
               {subtitle}
             </ThemedText>
           ) : null}
         </View>
-        {/* status and plan end sit under the name, indented past the logo */}
+        {/* Secondary metadata follows the account name. */}
         {renewal || statusLabel(status, now, t) ? (
           <View style={styles.meta}>
             <StatusBadge status={status} now={now} />
@@ -113,20 +106,12 @@ export function AccountCard({
 const styles = StyleSheet.create({
   content: { gap: Spacing.three },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: Spacing.two,
   },
-  name: { flexShrink: 1, flexGrow: 1 },
-  // the plan yields space to the name first, but never collapses to nothing
-  subtitle: { flexShrink: 2, textAlign: 'right', minWidth: 48 },
-  // 24pt logo + 8pt gap: aligned with the name above
   meta: {
     marginTop: -Spacing.two,
-    paddingLeft: 24 + Spacing.two,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: Spacing.two,
   },
   meters: { gap: Spacing.two },

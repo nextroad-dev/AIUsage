@@ -37,8 +37,7 @@ export function windowFor(
 }
 
 /**
- * The current usage window in one row: used amount on the left, the split bar in the middle
- * (used share in the meter's level colour, the rest as a quiet track), remaining on the right.
+ * One column: used amount, the split bar, then remaining amount.
  * Without a known split (`fraction` undefined) only the amount line is shown.
  */
 export function WindowBar({
@@ -53,7 +52,7 @@ export function WindowBar({
   color: string;
   used: string;
   remaining?: string;
-  /** left label, defaults to "used"; balance meters pass the balance label */
+  /** amount label, defaults to "used"; balance meters pass the balance label */
   label?: string;
 }) {
   const theme = useTheme();
@@ -69,7 +68,7 @@ export function WindowBar({
 
   if (fraction === undefined) {
     return (
-      <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+      <ThemedText type="small" themeColor="textSecondary" style={styles.number}>
         {text} {used}
       </ThemedText>
     );
@@ -77,7 +76,7 @@ export function WindowBar({
 
   return (
     <View style={styles.row}>
-      <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+      <ThemedText type="small" themeColor="textSecondary" style={styles.number}>
         {text} {used}
       </ThemedText>
       <View
@@ -87,17 +86,20 @@ export function WindowBar({
       >
         <Animated.View style={[styles.fill, { backgroundColor: color }, fillStyle]} />
       </View>
-      <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-        {remaining === undefined ? '' : `${t('Remaining')} ${remaining}`}
-      </ThemedText>
+      {remaining === undefined ? null : (
+        <ThemedText type="small" themeColor="textSecondary" style={styles.number}>
+          {`${t('Remaining')} ${remaining}`}
+        </ThemedText>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, minHeight: 20 },
+  row: { gap: Spacing.one },
+  number: { fontVariant: ['tabular-nums'] },
   track: {
-    flex: 1,
+    width: '100%',
     height: 8,
     borderRadius: Radius.pill,
     overflow: 'hidden',

@@ -17,6 +17,8 @@ TaskManager.defineTask(BACKGROUND_TASK, async () => {
     const settings = mergeAlertSettings(await s.repos.settings.getJson('alerts', null));
     if (!settings.backgroundRefresh) return BackgroundTask.BackgroundTaskResult.Success;
     await runRefreshCycle(s.cycleDeps, { budgetMs: 20_000 });
+    // Join the same public requests/cache used by the foreground, while this task is alive.
+    await s.refreshPublicData().catch(() => {});
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch {
     return BackgroundTask.BackgroundTaskResult.Failed;

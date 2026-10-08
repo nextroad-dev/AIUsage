@@ -7,6 +7,7 @@ import { createRepos } from '@/db/repos';
 import { resetCoordinatorForTests, runRefreshCycle, type CycleDeps } from '@/refresh/coordinator';
 import { fakeFetch, NOW } from '@/test-utils/fetch';
 import { memoryDriver } from '@/test-utils/sqlite';
+import { CodexResetService, SOURCE } from '@/data/codex-reset/service';
 
 const POE = 'https://api.poe.com/usage/current_balance';
 const OR_KEY = 'https://openrouter.ai/api/v1/key';
@@ -37,7 +38,7 @@ async function setup(routes: Parameters<typeof fakeFetch>[0], clock = { t: NOW.g
     await repos.accounts.create({ id, providerId, label: id, authMethod: 'apiKey', createdAt: 1 });
     await store.save(id, { type: 'apiKey', key: 'k' });
   };
-  return { repos, deps, sent, f, clock, addAuto };
+  return { db, repos, deps, sent, f, clock, addAuto };
 }
 
 const manualConfig = (anchor: string) => ({
@@ -55,6 +56,83 @@ const manualConfig = (anchor: string) => ({
 });
 
 describe('runRefreshCycle', () => {
+  it('keeps Codex personal usage and other providers healthy when the public data source fails', async () => {
+    const usage = 'https://chatgpt.com/backend-api/wham/usage';
+    const s = await setup({
+      [usage]: {
+        json: {
+          rate_limit: {
+            primary_window: { used_percent: 40, reset_at: 1791300000 },
+          },
+        },
+      },
+      [POE]: { json: { current_point_balance: 100 } },
+      [`${SOURCE}api/forecast`]: { status: 401 },
+      [`${SOURCE}api/timeline?locale=zh`]: { status: 500 },
+      [`${SOURCE}api/status-history`]: { status: 503 },
+    });
+    // Match the production Expo driver's serialized transactions; the basic memory fake
+    // rejects overlapping transactions from two otherwise successful provider refreshes.
+    const transaction = s.db.transaction;
+    let chain: Promise<unknown> = Promise.resolve();
+    s.db.transaction = (fn) => {
+      const next = chain.then(() => transaction(fn));
+      chain = next.catch(() => undefined);
+      return next;
+    };
+    await s.addAuto('p', 'poe');
+    await s.repos.accounts.create({
+      id: 'c',
+      providerId: 'codex',
+      label: 'Codex',
+      authMethod: 'oauthPkce',
+      createdAt: 1,
+    });
+    const store = new CredentialStore(memoryKv());
+    await store.save('c', {
+      type: 'oauth',
+      accessToken: 'private-codex-token',
+      accountId: 'private-account',
+    });
+    await store.save('p', { type: 'apiKey', key: 'private-poe-key' });
+    s.deps.creds = new CredentialManager(store);
+    const service = new CodexResetService({
+      store: s.repos.settings,
+      fetch: s.f.fetch,
+      now: () => s.clock.t,
+    });
+    await service.setEnabled(true);
+    const publicWork = service.refresh();
+    s.deps.refreshPublicData = () => publicWork;
+    const result = await runRefreshCycle(s.deps, { force: true });
+    await publicWork;
+    expect(result.outcomes.c.type).toBe('ok');
+    expect(result.outcomes.p.type).toBe('ok');
+    expect(await s.repos.health.get('c')).toMatchObject({
+      statusType: 'ok',
+      failures: 0,
+    });
+    expect((await s.repos.snapshots.latest('c', 'codex'))?.meters[0].kind).toEqual({
+      type: 'percent',
+      used: 40,
+    });
+    for (const call of s.f.calls.filter((c) => c.url.startsWith(SOURCE))) {
+      expect(call.headers.Authorization).toBeUndefined();
+      expect(call.headers['ChatGPT-Account-Id']).toBeUndefined();
+    }
+  });
+
+  it('never waits for or fails the personal refresh cycle on auxiliary public work', async () => {
+    const s = await setup({ [POE]: { json: { current_point_balance: 1 } } });
+    await s.addAuto('p', 'poe');
+    s.deps.refreshPublicData = () => new Promise(() => {});
+    expect((await runRefreshCycle(s.deps, { force: true })).outcomes.p.type).toBe('ok');
+    s.deps.refreshPublicData = async () => {
+      throw new Error('source unavailable');
+    };
+    expect((await runRefreshCycle(s.deps, { force: true })).outcomes.p.type).toBe('ok');
+  });
+
   it('refreshes, evaluates alerts and notifies in one pass', async () => {
     const s = await setup({
       [OR_KEY]: { json: { data: { limit: 10, usage: 9, usage_daily: 1 } } },

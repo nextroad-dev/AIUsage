@@ -29,6 +29,8 @@ jest.mock('expo-router', () => ({
 jest.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: mockInvalidate }),
 }));
+// Public-data query/consent behavior is exercised separately with a real QueryClient.
+jest.mock('@/data/codex-reset/hooks', () => ({ useRefreshCodexReset: () => jest.fn() }));
 jest.mock('@/components/screen', () => ({
   Screen: ({ children }: { children: React.ReactNode }) => children,
 }));

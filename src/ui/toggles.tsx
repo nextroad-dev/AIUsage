@@ -12,16 +12,20 @@ export function ToggleRow({
   hint,
   value,
   onChange,
+  vertical = false,
+  disabled = false,
 }: {
   label: string;
   hint?: string;
   value: boolean;
   onChange: (v: boolean) => void;
+  vertical?: boolean;
+  disabled?: boolean;
 }) {
   const theme = useTheme();
   return (
-    <View style={styles.row}>
-      <View style={styles.text}>
+    <View style={vertical ? styles.vertical : styles.row}>
+      <View style={vertical ? styles.verticalText : styles.text}>
         <ThemedText type="small">{label}</ThemedText>
         {hint ? (
           <ThemedText type="small" themeColor="textSecondary">
@@ -32,6 +36,7 @@ export function ToggleRow({
       <Switch
         accessibilityLabel={label}
         value={value}
+        disabled={disabled}
         trackColor={{ true: theme.primary }}
         onValueChange={(v) => {
           haptics.select();
@@ -80,6 +85,8 @@ export function MultiChips<T extends number | string>({
 }
 
 const styles = StyleSheet.create({
+  vertical: { alignItems: 'flex-start', gap: Spacing.two },
+  verticalText: { gap: Spacing.half },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
