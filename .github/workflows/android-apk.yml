@@ -89,8 +89,7 @@ jobs:
           BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           KEYSTORE="$RUNNER_TEMP/release.keystore"
           # tolerate line breaks a Windows shell may have added when the secret was set
-          printf '%s' "$KEYSTORE_BASE64" | tr -d '
- ' | base64 --decode > "$KEYSTORE"
+          printf '%s' "$KEYSTORE_BASE64" | tr -d '\r\n ' | base64 --decode > "$KEYSTORE"
           APK=$(ls AIUsage-*.apk)
           mkdir signed
           "$BUILD_TOOLS/zipalign" -p -f 4 "$APK" "$RUNNER_TEMP/aligned.apk"
