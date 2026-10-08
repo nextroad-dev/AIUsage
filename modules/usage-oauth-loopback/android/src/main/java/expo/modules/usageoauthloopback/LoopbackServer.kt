@@ -13,13 +13,13 @@ import kotlin.concurrent.thread
  * One-shot HTTP listener bound to 127.0.0.1 that hands the provider's redirect to the app scheme.
  * Mirrors ios/LoopbackServer.swift:
  * - Loopback only, so nothing on the local network can reach it.
- * - Only a well-formed `GET /auth/callback` with a matching Host reaches the redirect step; any
- *   other request is answered with an error and does not consume the session.
+ * - Only a well-formed `GET /auth/callback` with a matching Host and the session's `state` reaches
+ *   the redirect step; any other request is answered with an error and does not consume the session.
  * - The response is a 302 to `usage://oauth/<provider>`; parameters are re-encoded with
  *   Uri.Builder, never interpolated into a header string or a page.
  * - The first accepted callback ends the session: the listener closes and later requests fail.
  */
-class LoopbackServer(private val provider: String) {
+class LoopbackServer(private val provider: String, private val expectedState: String) {
   private val finished = AtomicBoolean(false)
   private var socket: ServerSocket? = null
   private var boundPort = 0
@@ -93,9 +93,9 @@ class LoopbackServer(private val provider: String) {
         val code = single(target, "code")
         val state = single(target, "state")
         val error = single(target, "error")
-        // Anything without a complete code/state signal is ignored rather than consumed: the real
-        // callback must still be able to finish the sign-in.
-        if (error == null && (code == null || state == null)) return respond(c, 400, null)
+        // Anything without this session's state, or without a code or error, is ignored rather
+        // than consumed: the real callback must still be able to finish the sign-in.
+        if (state != expectedState || (error == null && code == null)) return respond(c, 400, null)
 
         val redirect = Uri.Builder().scheme("usage").authority("oauth").path("/$provider")
         code?.let { redirect.appendQueryParameter("code", it) }
@@ -164,9 +164,14 @@ class LoopbackServer(private val provider: String) {
     out.flush()
   }
 
-  private companion object {
-    const val MAX_REQUEST_BYTES = 16 * 1024
-    const val CONNECTION_IDLE_MS = 20_000
-    const val MAX_LIFETIME_MS = 30L * 60 * 1000
+  companion object {
+    /** The JavaScript side sends 32 random bytes as base64url; anything else is refused up front. */
+    fun isValidState(state: String): Boolean =
+      state.length in 16..256 &&
+        state.all { it in 'A'..'Z' || it in 'a'..'z' || it in '0'..'9' || it == '-' || it == '_' }
+
+    private const val MAX_REQUEST_BYTES = 16 * 1024
+    private const val CONNECTION_IDLE_MS = 20_000
+    private const val MAX_LIFETIME_MS = 30L * 60 * 1000
   }
 }

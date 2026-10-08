@@ -37,6 +37,8 @@ interface Harness {
   deps: Partial<BrowserAuthorizeDeps>;
   clock: { now: number };
   loopback: { provider: string; port: number }[];
+  /** the state each listener was told to wait for */
+  loopbackStates: string[];
   opened: { url: string; redirectUrl: string }[];
   stops: number;
   dismissals: number;
@@ -57,6 +59,7 @@ function harness(
   const h: Harness = {
     clock: { now: 1000 },
     loopback: [],
+    loopbackStates: [],
     opened: [],
     stops: 0,
     dismissals: 0,
@@ -68,8 +71,9 @@ function harness(
     now: () => h.clock.now,
     randomBytes: async (count: number) => new Uint8Array(count).fill(0xab),
     digestBase64: async (value: string) => createHash('sha256').update(value).digest('base64'),
-    startLoopback: async (provider, port) => {
+    startLoopback: async (provider, port, state) => {
       h.loopback.push({ provider, port });
+      h.loopbackStates.push(state);
       if (options.unavailable) throw new LoopbackUnavailableError();
       if (options.allPortsBusy || options.busyPorts?.includes(port)) throw new LoopbackPortError();
       return { port };
@@ -184,6 +188,8 @@ describe('browser authorization session', () => {
     const url = new URL(h.opened[0].url);
     expect(url.searchParams.get('code_challenge')).toBe(challengeFor(VERIFIER));
     expect(url.searchParams.get('state')).toBe(STATE);
+    // the native listener only forwards a callback carrying this same state
+    expect(h.loopbackStates).toEqual([STATE]);
     expect(url.searchParams.get('redirect_uri')).toBe(session.redirectUri);
     expect(h.opened[0].url).not.toContain(VERIFIER);
     expect(session.authorizationUrl).toBe(h.opened[0].url);

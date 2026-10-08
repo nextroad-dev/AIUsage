@@ -58,13 +58,42 @@ export const DEFAULT_QUOTA_PER_UNIT = 500_000;
 
 // ---------------------------------------------------------------- URL & probe client
 
-/** Trims, adds https:// when missing, drops trailing slashes and a trailing /v1 or /api. */
+/** A plain http:// address on the public internet: the key would travel in clear text. */
+export class InsecureBaseUrlError extends Error {
+  constructor() {
+    super('http:// is only allowed for this device or a private network');
+    this.name = 'InsecureBaseUrlError';
+  }
+}
+
+/** This device or a private network (RFC 1918, link-local, ULA, mDNS), where http:// is accepted. */
+export function isPrivateHost(hostname: string): boolean {
+  const h = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.local')) return true;
+  if (h === '::1' || /^f[cd][0-9a-f]{2}:/.test(h) || /^fe[89ab][0-9a-f]:/.test(h)) return true;
+  const v4 = /^(\d{1,3})\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/.exec(h);
+  if (!v4) return false;
+  const [a, b] = [Number(v4[1]), Number(v4[2])];
+  return (
+    a === 127 ||
+    a === 10 ||
+    (a === 192 && b === 168) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 169 && b === 254)
+  );
+}
+
+/**
+ * Trims, adds https:// when missing, drops trailing slashes and a trailing /v1 or /api. Every relay
+ * request goes through here, so a public http:// address never gets the key, even when saved earlier.
+ */
 export function normalizeBaseUrl(input: string): string {
   let s = input.trim();
   if (!s) throw new Error('empty base URL');
   if (!/^https?:\/\//i.test(s)) s = `https://${s}`;
   const url = new URL(s);
   if (url.protocol !== 'https:' && url.protocol !== 'http:') throw new Error('unsupported scheme');
+  if (url.protocol === 'http:' && !isPrivateHost(url.hostname)) throw new InsecureBaseUrlError();
   let path = url.pathname.replace(/\/+$/, '');
   path = path.replace(/\/(v1|api)$/i, '');
   return `${url.protocol}//${url.host}${path}`;

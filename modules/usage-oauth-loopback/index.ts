@@ -2,8 +2,11 @@ import { requireOptionalNativeModule } from 'expo-modules-core';
 
 /** Native side of the loopback callback receiver; see `ios/LoopbackServer.swift`. */
 export interface LoopbackNativeModule {
-  /** Resolves `{ port }` when the listener is ready, or `{ error: 'port-unavailable' }`. */
-  start(provider: string, port: number): Promise<{ port?: number; error?: string }>;
+  /**
+   * Resolves `{ port }` when the listener is ready, or `{ error: 'port-unavailable' }`. Only a
+   * callback carrying `state` ends the session; anything else is refused and the wait goes on.
+   */
+  start(provider: string, port: number, state: string): Promise<{ port?: number; error?: string }>;
   stop(): Promise<void>;
 }
 

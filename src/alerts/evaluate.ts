@@ -17,7 +17,7 @@ export interface AlertSettings {
     maxUsedFraction: number;
   };
   authExpired: boolean;
-  /** notify the moment a window that was nearly used up resets */
+  /** notify the moment a time window that was used up (100%) resets */
   windowReset: boolean;
   /** remind before a paid plan renews or ends */
   renewal: { enabled: boolean; days: number };
@@ -98,6 +98,9 @@ export function choiceFor(rules: AlertRule[], accountId: string, m: Meter): Over
   if (!r) return 'default';
   return r.enabled ? r.threshold : 'off';
 }
+
+/** A window counts as used up once it reads as 100% (providers round, e.g. 99.6%). */
+export const USED_UP = 0.995;
 
 const pctText = (f: number) => `${formatNumber(Math.round(f * 100), 0)}%`;
 
@@ -192,15 +195,16 @@ export function evaluateAlerts(input: {
         }
       }
 
-      // --- a nearly used-up window resets: schedule "quota is back" for the reset moment ---
+      // --- a used-up time window: count down to its reset, then say the quota is back ---
+      // Only a window that hit its limit gets one; a window that was barely touched resets
+      // silently. The dispatcher withdraws a pending notice once no event asks for it any more.
       const resetAt = m.resetsAt ? Date.parse(m.resetsAt) : NaN;
-      const nearlyOut = Math.min(...settings.thresholds, 0.8);
       if (
         settings.windowReset &&
         cd &&
         !cd.elapsed &&
         Number.isFinite(resetAt) &&
-        f >= nearlyOut &&
+        f >= USED_UP &&
         !(ov && !ov.enabled)
       ) {
         events.push({

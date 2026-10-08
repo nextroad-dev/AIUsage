@@ -2,6 +2,7 @@ import { AccountService } from '@/authkit/account-service';
 import { shouldRelock } from '@/authkit/biometric';
 import { CredentialStore, memoryKv } from '@/authkit/secure';
 import {
+  isAllowedNavigation,
   isCaptureComplete,
   jwtExpiryMs,
   looksLoggedOut,
@@ -124,5 +125,41 @@ describe('AccountService', () => {
     await svc.removeAll();
     expect(await repos.accounts.list()).toEqual([]);
     expect(await creds.load('b')).toBeNull();
+  });
+
+  it('removeAll keeps going past an account it cannot remove, then rejects', async () => {
+    const { repos } = await setup();
+    const kv = memoryKv();
+    const creds = new CredentialStore({
+      ...kv,
+      delete: async (k) => {
+        if (k.startsWith('usage.cred.a.')) throw new Error('keychain refused');
+        await kv.delete(k);
+      },
+    });
+    const svc = new AccountService(repos, creds);
+    await svc.add(acct('a'), { type: 'apiKey', key: '1' });
+    await svc.add(acct('b'), { type: 'apiKey', key: '2' });
+    await expect(svc.removeAll()).rejects.toThrow();
+    expect((await repos.accounts.list()).map((x) => x.id)).toEqual(['a']);
+    expect(await creds.load('b')).toBeNull();
+  });
+});
+
+describe('isAllowedNavigation', () => {
+  const spec: CaptureSpec = {
+    loginUrl: 'https://cursor.com/dashboard',
+    cookieDomains: ['cursor.com'],
+    signInDomains: ['authkit.app'],
+  };
+
+  it('keeps the sign-in page on the provider and its identity provider over https', () => {
+    expect(isAllowedNavigation(spec, 'https://cursor.com/dashboard')).toBe(true);
+    expect(isAllowedNavigation(spec, 'https://www.cursor.com/x')).toBe(true);
+    expect(isAllowedNavigation(spec, 'https://cursor.authkit.app/login')).toBe(true);
+    expect(isAllowedNavigation(spec, 'http://cursor.com/dashboard')).toBe(false);
+    expect(isAllowedNavigation(spec, 'https://evilcursor.com/')).toBe(false);
+    expect(isAllowedNavigation(spec, 'https://cursor.com.evil.io/')).toBe(false);
+    expect(isAllowedNavigation(spec, 'javascript:alert(1)')).toBe(false);
   });
 });

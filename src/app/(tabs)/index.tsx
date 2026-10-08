@@ -33,14 +33,21 @@ export default function OverviewScreen() {
   const refresh = useRefreshAll();
   const update = useUpdateNotice();
   const [notice, setNotice] = useState<RefreshSummary>();
+  // only a pull shows the pull spinner; the refresh on open and the header button have their own
+  const [pulling, setPulling] = useState(false);
   const closeNotice = useCallback(() => setNotice(undefined), []);
 
-  // the refresh button reports what it did; the automatic refresh on open stays silent
-  const refreshNow = () => {
+  // A pull or the refresh button reports what it did: how many accounts updated, or which ones
+  // failed and why. The automatic refresh on open stays silent.
+  const refreshNow = (source: 'button' | 'pull') => {
+    // a refresh already running (e.g. the one on open) is not doubled up
+    if (refresh.isPending) return;
     setNotice(undefined);
+    if (source === 'pull') setPulling(true);
     refresh.mutate(
       { force: true },
       {
+        onSettled: () => setPulling(false),
         onSuccess: (result) => {
           const s = summarizeCycle(result, views.data ?? []);
           if (s.kind === 'ok' && s.updated === 0) return;
@@ -66,7 +73,7 @@ export default function OverviewScreen() {
   const empty = list.length === 0 && !views.isLoading;
 
   return (
-    <Screen>
+    <Screen onRefresh={() => refreshNow('pull')} refreshing={pulling}>
       <ScreenHeader
         title={t('Usage')}
         accessory={
@@ -74,7 +81,9 @@ export default function OverviewScreen() {
             <UpdatePill release={update.notice} onDismiss={update.dismiss} />
           ) : undefined
         }
-        action={<RefreshButton refreshing={refresh.isPending} onPress={refreshNow} />}
+        action={
+          <RefreshButton refreshing={refresh.isPending} onPress={() => refreshNow('button')} />
+        }
       />
 
       {notice ? <RefreshNotice summary={notice} onClose={closeNotice} /> : null}

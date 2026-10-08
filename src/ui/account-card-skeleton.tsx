@@ -1,40 +1,21 @@
-import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, {
-  cancelAnimation,
-  Easing,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
+import { useBreathe } from '@/ui/skeleton';
 
 /**
  * Placeholder that mirrors the AccountCard geometry (badge + ring + two lines) while the first
- * snapshot loads. It breathes gently to signal work in progress; under reduced motion it stays
- * still, which is just as readable. It reports no progress value, since none is known yet.
+ * snapshot loads, with the shared breathing pulse (`useBreathe`). It reports no progress value,
+ * since none is known yet.
  */
 export function AccountCardSkeleton() {
   const theme = useTheme();
   const t = useT();
-  const reduced = useReducedMotion();
   const block = { backgroundColor: theme.backgroundSelected };
-  const pulse = useSharedValue(1);
-  useEffect(() => {
-    if (reduced) return;
-    pulse.value = withRepeat(
-      withTiming(0.45, { duration: 800, easing: Easing.inOut(Easing.quad) }),
-      -1,
-      true,
-    );
-    return () => cancelAnimation(pulse);
-  }, [reduced, pulse]);
-  const breathe = useAnimatedStyle(() => ({ opacity: pulse.value }));
+  const breathe = useBreathe();
 
   return (
     <Animated.View style={[styles.root, breathe]} accessible accessibilityLabel={t('Loading…')}>

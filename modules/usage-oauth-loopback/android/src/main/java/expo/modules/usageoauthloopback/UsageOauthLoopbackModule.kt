@@ -21,15 +21,17 @@ class UsageOauthLoopbackModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("UsageOauthLoopback")
 
-    AsyncFunction("start") { provider: String, port: Int ->
-      if ((provider != "codex" && provider != "openrouter") || port !in 1..65535) {
+    AsyncFunction("start") { provider: String, port: Int, state: String ->
+      if ((provider != "codex" && provider != "openrouter") || port !in 1..65535 ||
+        !LoopbackServer.isValidState(state)
+      ) {
         return@AsyncFunction mapOf("error" to "invalid-request")
       }
       synchronized(lock) {
         server?.stop()
         server = null
       }
-      val next = LoopbackServer(provider)
+      val next = LoopbackServer(provider, state)
       val bound = next.start(port) ?: return@AsyncFunction mapOf("error" to "port-unavailable")
       synchronized(lock) { server = next }
       mapOf("port" to bound)

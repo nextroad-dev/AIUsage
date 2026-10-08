@@ -9,6 +9,8 @@ export interface CaptureSpec {
   loginUrl: string;
   /** cookie domains to read, e.g. ["cursor.com"] */
   cookieDomains: string[];
+  /** other sites sign-in passes through (e.g. the identity provider); see `isAllowedNavigation` */
+  signInDomains?: string[];
   /** capture is complete when at least one of these cookie names is present */
   anyOfCookies?: string[];
   /** ...and all of these localStorage keys (e.g. Windsurf's four keys) */
@@ -37,6 +39,24 @@ export function toSessionCredential(spec: CaptureSpec, got: Captured): Credentia
     ? Object.fromEntries(Object.entries(got.cookies).filter(([k]) => keep.includes(k)))
     : got.cookies;
   return { type: 'session', cookies, storage: got.storage };
+}
+
+/**
+ * The sign-in WebView only goes to https pages on the provider's own domains (and subdomains), so a
+ * link on the page cannot take the user to a look-alike site inside the app.
+ */
+export function isAllowedNavigation(spec: CaptureSpec, rawUrl: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== 'https:') return false;
+  const host = url.hostname.toLowerCase();
+  return [...spec.cookieDomains, ...(spec.signInDomains ?? [])].some(
+    (d) => host === d || host.endsWith(`.${d}`),
+  );
 }
 
 export function looksLoggedOut(spec: CaptureSpec, url: string): boolean {

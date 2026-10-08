@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
 import { getPermission, requestPermission } from '@/alerts/expo-notifier';
+import { webKitCookies } from '@/authkit/expo-cookies';
 import {
   DEFAULT_ALERT_SETTINGS,
   mergeAlertSettings,
@@ -100,8 +101,13 @@ export function useAccountActions() {
       }),
     removeAll: () =>
       run(async () => {
-        await services!.accounts.removeAll();
-        await clearPrices(services!.repos);
+        try {
+          await services!.accounts.removeAll();
+        } finally {
+          await clearPrices(services!.repos);
+          // sessions from in-app web sign-in live in the WebView cookie store, not the keychain
+          await webKitCookies.clear?.().catch(() => undefined);
+        }
       }),
     setPrice: (id: string, price: Price | null) => run(() => setPrice(services!.repos, id, price)),
   };
@@ -128,7 +134,12 @@ export function useAlertSettings() {
     },
     onSuccess: (next) => qc.setQueryData(['alertSettings'], next),
   });
-  return { settings: query.data ?? DEFAULT_ALERT_SETTINGS, update: update.mutate };
+  return {
+    settings: query.data ?? DEFAULT_ALERT_SETTINGS,
+    /** false until the stored settings are read; until then `settings` are only the defaults */
+    loaded: query.data !== undefined,
+    update: update.mutate,
+  };
 }
 
 export function useNotificationPermission() {
@@ -141,10 +152,13 @@ export function useNotificationPermission() {
   return { state: query.data, request: request.mutate };
 }
 
-export function useBackgroundState(enabled: boolean) {
+/** Registers or removes the background task to match the setting, once the setting is known. */
+export function useBackgroundState(enabled: boolean, known = true) {
   return useQuery({
     queryKey: ['backgroundState', enabled],
     queryFn: () => syncBackgroundRegistration(enabled),
+    // acting on the default before the stored value arrives would flip the registration
+    enabled: known,
   });
 }
 

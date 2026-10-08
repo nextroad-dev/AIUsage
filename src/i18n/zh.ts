@@ -81,6 +81,8 @@ export const zh: Record<string, string> = {
   'Enter a valid address, e.g. https://api.example.com':
     '请输入有效地址，例如 https://api.example.com',
   'Could not reach this address.': '无法连接这个地址。',
+  'Use https://. Plain http:// is only allowed for addresses on your own network.':
+    '请使用 https://。http:// 仅允许用于本机或局域网地址。',
   'Unrecognised software': '未识别的程序',
   Used: '已使用',
   Total: '总额度',
@@ -191,6 +193,9 @@ export const zh: Record<string, string> = {
   'This removes every account, stored credential and usage history from this device. It cannot be undone.':
     '这会从本机删除所有账号、凭据和用量历史，且无法撤销。',
   'Delete everything': '全部删除',
+  'Some data could not be deleted': '部分数据未能删除',
+  'The remaining accounts are still listed. Try again, or remove them one by one.':
+    '未删除的账号仍会显示。请重试，或逐个删除。',
   About: '关于',
   'Version {version}': '版本 {version}',
 
@@ -366,7 +371,7 @@ export const zh: Record<string, string> = {
   'Subscriptions per month': '每月订阅合计',
   'Next plan end: {name} · {date}': '最近到期：{name} · {date}',
   'Tell me when a window resets': '窗口重置时通知我',
-  'Only for windows that were nearly used up.': '仅限即将用完的窗口。',
+  'Only for windows that were used up.': '仅限额度已用完的窗口。',
   'Remind me before a plan ends': '套餐到期前提醒我',
   '{n} days before': '提前 {n} 天',
   Subscription: '订阅',

@@ -19,9 +19,9 @@ public final class UsageOauthLoopbackModule: Module {
   public func definition() -> ModuleDefinition {
     Name("UsageOauthLoopback")
 
-    AsyncFunction("start") { (provider: String, port: Int, promise: Promise) in
+    AsyncFunction("start") { (provider: String, port: Int, state: String, promise: Promise) in
       guard (provider == "codex" || provider == "openrouter"), port > 0, port <= 65535,
-        let candidate = UInt16(exactly: port)
+        let candidate = UInt16(exactly: port), LoopbackServer.isValidState(state)
       else {
         promise.resolve(["error": "invalid-request"])
         return
@@ -29,7 +29,7 @@ public final class UsageOauthLoopbackModule: Module {
       self.serialQueue.async {
         self.server?.stop()
         self.server = nil
-        let server = LoopbackServer(provider: provider)
+        let server = LoopbackServer(provider: provider, expectedState: state)
         self.server = server
         server.start(port: candidate) { result in
           switch result {

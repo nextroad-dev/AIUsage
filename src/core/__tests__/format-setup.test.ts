@@ -1,4 +1,4 @@
-import { formatAgo, formatAmount, formatCountdown, meterText } from '@/core/format';
+import { formatAgo, formatAmount, formatCountdown, formatPlan, meterText } from '@/core/format';
 import {
   anchorFor,
   applyEdits,
@@ -56,6 +56,17 @@ describe('formatting', () => {
     expect(formatCountdown('2d 3h')).toBe('2天 3小时');
     setLocale('en');
     expect(formatCountdown('2d 3h')).toBe('2d 3h');
+  });
+});
+
+describe('formatPlan', () => {
+  it('capitalises reported plan names without touching their own casing', () => {
+    expect(formatPlan('plus')).toBe('Plus');
+    expect(formatPlan('pro_plus')).toBe('Pro Plus');
+    expect(formatPlan('individual')).toBe('Individual');
+    expect(formatPlan('ChatGPT Pro')).toBe('ChatGPT Pro');
+    expect(formatPlan('New API')).toBe('New API');
+    expect(formatPlan('专业版')).toBe('专业版');
   });
 });
 

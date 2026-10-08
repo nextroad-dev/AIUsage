@@ -31,8 +31,19 @@ export class AccountService {
     await this.repos.accounts.remove(accountId);
   }
 
-  /** Wipe everything (settings > clear data). */
+  /**
+   * Wipe everything (settings > clear data). One account that cannot be removed does not stop the
+   * others; it stays listed and the call rejects, so the user can retry.
+   */
   async removeAll(): Promise<void> {
-    for (const a of await this.repos.accounts.list()) await this.remove(a.id);
+    let failed = 0;
+    for (const a of await this.repos.accounts.list()) {
+      try {
+        await this.remove(a.id);
+      } catch {
+        failed++;
+      }
+    }
+    if (failed > 0) throw new Error(`${failed} account(s) could not be removed`);
   }
 }

@@ -11,9 +11,9 @@ enum LoopbackStartResult {
  *
  * Security properties:
  * - Loopback only (`requiredLocalEndpoint`), so nothing on the local network can reach it.
- * - Only a well-formed `GET /auth/callback` with a matching Host reaches the redirect step; any
- *   other request is answered with an error and does not consume the session, so the real callback
- *   can still arrive.
+ * - Only a well-formed `GET /auth/callback` with a matching Host and the session's `state` reaches
+ *   the redirect step; any other request is answered with an error and does not consume the
+ *   session, so the real callback can still arrive.
  * - The response is a 302 to `usage://oauth/<provider>`; the code is passed through as-is with
  *   URLComponents, never interpolated into a header string or an HTML page.
  * - First accepted callback ends the session: the listener stops and later requests are refused.
@@ -27,6 +27,7 @@ final class LoopbackServer {
 
   private let queue = DispatchQueue(label: "com.nextroad-dev.aiusage.oauth-loopback.server")
   private let provider: String
+  private let expectedState: String
   private var listener: NWListener?
   private var connections: [ObjectIdentifier: NWConnection] = [:]
   private var boundPort: UInt16 = 0
@@ -34,8 +35,17 @@ final class LoopbackServer {
   private var reported = false
   private var lifetime: DispatchWorkItem?
 
-  init(provider: String) {
+  init(provider: String, expectedState: String) {
     self.provider = provider
+    self.expectedState = expectedState
+  }
+
+  /// The JavaScript side sends 32 random bytes as base64url; anything else is refused up front.
+  static func isValidState(_ state: String) -> Bool {
+    (16...256).contains(state.count)
+      && state.unicodeScalars.allSatisfy {
+        ($0.isASCII && CharacterSet.alphanumerics.contains($0)) || $0 == "-" || $0 == "_"
+      }
   }
 
   func start(port: UInt16, completion: @escaping (LoopbackStartResult) -> Void) {
@@ -188,9 +198,9 @@ final class LoopbackServer {
     let code = singleValue(items, "code")
     let state = singleValue(items, "state")
     let error = singleValue(items, "error")
-    // Anything without a complete code/state signal is ignored rather than consumed: the real
-    // callback must still be able to finish the sign-in.
-    guard error != nil || (code != nil && state != nil) else {
+    // Anything without this session's state, or without a code or error, is ignored rather than
+    // consumed: the real callback must still be able to finish the sign-in.
+    guard state == expectedState, error != nil || code != nil else {
       respond(connection, status: 400, location: nil)
       return
     }

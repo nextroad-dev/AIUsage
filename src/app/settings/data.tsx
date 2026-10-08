@@ -24,8 +24,16 @@ export default function DataSettingsScreen() {
           style: 'destructive',
           onPress: async () => {
             haptics.warning();
-            await actions.removeAll();
-            router.back();
+            try {
+              await actions.removeAll();
+              router.back();
+            } catch {
+              haptics.error();
+              Alert.alert(
+                t('Some data could not be deleted'),
+                t('The remaining accounts are still listed. Try again, or remove them one by one.'),
+              );
+            }
           },
         },
       ],

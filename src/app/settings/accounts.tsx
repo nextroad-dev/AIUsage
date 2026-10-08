@@ -9,6 +9,7 @@ import { useT } from '@/i18n';
 import { Button } from '@/ui/controls';
 import { enterItem, exitFade } from '@/ui/motion';
 import { ProviderIcon } from '@/ui/provider-icon';
+import { RowSkeleton } from '@/ui/skeleton';
 
 export default function AccountsSettingsScreen() {
   const router = useRouter();
@@ -20,9 +21,7 @@ export default function AccountsSettingsScreen() {
     <Screen safeTop={false}>
       <Section>
         {accounts.isLoading && !accounts.data ? (
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('Loading…')}
-          </ThemedText>
+          <RowSkeleton rows={3} leading />
         ) : views.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary">
             {t('No accounts yet')}

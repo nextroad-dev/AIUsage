@@ -31,6 +31,40 @@ describe('ChunkedStore', () => {
     expect(kv.dump()).toEqual({});
   });
 
+  it('keeps the meta until every chunk is gone, so an interrupted delete can be retried', async () => {
+    const kv = memoryKv();
+    const store = new ChunkedStore(kv, 10);
+    await store.set('k', 'x'.repeat(35)); // 4 chunks + meta
+    let deletes = 0;
+    const flaky = new ChunkedStore(
+      {
+        ...kv,
+        delete: async (k) => {
+          if (++deletes === 3) throw new Error('interrupted');
+          await kv.delete(k);
+        },
+      },
+      10,
+    );
+    await expect(flaky.delete('k')).rejects.toThrow('interrupted');
+    expect(kv.dump()['k.meta']).toBeDefined();
+    await store.delete('k');
+    expect(kv.dump()).toEqual({});
+  });
+
+  it('sweeps chunks left past the meta count', async () => {
+    const kv = memoryKv();
+    const store = new ChunkedStore(kv, 10);
+    await store.set('k', 'x'.repeat(15)); // 2 chunks + meta
+    await kv.set('k.2', 'orphan'); // interrupted shrink
+    await kv.set('k.3', 'orphan');
+    await store.delete('k');
+    expect(kv.dump()).toEqual({});
+    await kv.set('j.0', 'never got a meta'); // interrupted first write
+    await store.delete('j');
+    expect(kv.dump()).toEqual({});
+  });
+
   it('treats a torn write (missing chunk) as missing', async () => {
     const kv = memoryKv();
     const store = new ChunkedStore(kv, 10);

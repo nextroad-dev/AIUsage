@@ -3,6 +3,17 @@ import { intlLocale, t as globalT, type Translator } from '@/i18n';
 
 const CURRENCIES = new Set(['USD', 'CNY', 'EUR', 'GBP', 'JPY']);
 
+/**
+ * A plan name as a provider reports it ("plus", "pro_plus") made presentable ("Plus", "Pro Plus").
+ * Only first letters are raised, so names that already have their own casing ("ChatGPT") stay.
+ */
+export function formatPlan(plan: string): string {
+  return plan
+    .replace(/_+/g, ' ')
+    .trim()
+    .replace(/(^|\s)(\p{Ll})/gu, (_, gap: string, c: string) => gap + c.toUpperCase());
+}
+
 export function formatNumber(n: number, maxFractionDigits = 2): string {
   return new Intl.NumberFormat(intlLocale(), { maximumFractionDigits: maxFractionDigits }).format(
     n,

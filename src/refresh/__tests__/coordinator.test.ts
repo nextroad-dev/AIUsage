@@ -23,6 +23,8 @@ async function setup(routes: Parameters<typeof fakeFetch>[0], clock = { t: NOW.g
   const notifier: Notifier = {
     permission: async () => 'granted',
     send: async (e) => void sent.push(e),
+    scheduled: async () => [],
+    cancel: async () => undefined,
   };
   const deps: CycleDeps = {
     repos,

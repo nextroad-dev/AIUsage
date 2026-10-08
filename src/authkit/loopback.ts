@@ -20,14 +20,18 @@ export class LoopbackPortError extends Error {
 
 export const isLoopbackAvailable = (): boolean => loopbackNativeModule() !== null;
 
-/** Binds one loopback port and resolves with the port actually in use. */
+/**
+ * Binds one loopback port and resolves with the port actually in use. The listener only forwards a
+ * callback whose `state` matches, so another local process cannot use up the session.
+ */
 export async function startLoopback(
   provider: LoopbackProvider,
   port: number,
+  state: string,
 ): Promise<{ port: number }> {
   const native = loopbackNativeModule();
   if (!native) throw new LoopbackUnavailableError();
-  const result = await native.start(provider, port);
+  const result = await native.start(provider, port, state);
   if (!result || typeof result.port !== 'number' || result.port <= 0) {
     throw new LoopbackPortError();
   }

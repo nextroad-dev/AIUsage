@@ -31,7 +31,7 @@ export interface BrowserAuthorizeDeps {
   randomBytes(count: number): Promise<Uint8Array>;
   /** Standard base64 digest; converted to base64url for the S256 challenge. */
   digestBase64(value: string): Promise<string>;
-  startLoopback(provider: BrowserProvider, port: number): Promise<{ port: number }>;
+  startLoopback(provider: BrowserProvider, port: number, state: string): Promise<{ port: number }>;
   stopLoopback(): Promise<void>;
   openAuthSession(url: string, redirectUrl: string): Promise<{ type: string; url?: string }>;
   dismissAuthSession(): void;
@@ -211,7 +211,7 @@ export async function startBrowserAuthorization(
   for (const candidate of input.ports) {
     if (deps.now() >= expiresAt) break;
     try {
-      port = (await deps.startLoopback(input.provider, candidate)).port;
+      port = (await deps.startLoopback(input.provider, candidate, state)).port;
       break;
     } catch (e) {
       if (e instanceof LoopbackUnavailableError) throw new BrowserAuthError('unavailable');

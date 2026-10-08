@@ -16,6 +16,7 @@ import { useT } from '@/i18n';
 import { relaySnapshot } from '@/providers/relay';
 import {
   inspectProvider,
+  InsecureBaseUrlError,
   normalizeBaseUrl,
   RELAY_TYPE_NAMES,
   type RelayInspection,
@@ -55,8 +56,12 @@ export default function AddRelayScreen() {
     let url: string;
     try {
       url = normalizeBaseUrl(baseUrl);
-    } catch {
-      setError(t('Enter a valid address, e.g. https://api.example.com'));
+    } catch (e) {
+      setError(
+        e instanceof InsecureBaseUrlError
+          ? t('Use https://. Plain http:// is only allowed for addresses on your own network.')
+          : t('Enter a valid address, e.g. https://api.example.com'),
+      );
       haptics.error();
       return;
     }

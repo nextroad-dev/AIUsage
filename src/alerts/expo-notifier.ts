@@ -39,4 +39,11 @@ export const expoNotifier: Notifier = {
           : { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(e.at) },
     });
   },
+  async scheduled() {
+    const pending = await Notifications.getAllScheduledNotificationsAsync();
+    return pending.map((p) => p.identifier);
+  },
+  async cancel(id) {
+    await Notifications.cancelScheduledNotificationAsync(id);
+  },
 };
