@@ -33,6 +33,8 @@ import { summarizeOutcomes, type RefreshSummary } from '@/data/refresh-summary';
 import { enterFade, enterItem, exitFade, layoutShift } from '@/ui/motion';
 import { ProviderIcon } from '@/ui/provider-icon';
 import { StatusBadge } from '@/ui/status-badge';
+import { CodexResetSection } from '@/ui/codex-reset-section';
+import { useRefreshCodexReset } from '@/data/codex-reset/hooks';
 
 const keyOf = (m: Meter) => `${m.id}:${m.scope.type === 'model' ? m.scope.name : ''}`;
 
@@ -135,6 +137,7 @@ export default function AccountDetailScreen() {
   const now = useNow();
   const view = useAccountView(accountId);
   const refresh = useRefreshAccount(accountId);
+  const refreshPublic = useRefreshCodexReset();
   const [notice, setNotice] = useState<RefreshSummary>();
   const closeNotice = useCallback(() => setNotice(undefined), []);
   const actions = useAccountActions();
@@ -182,6 +185,7 @@ export default function AccountDetailScreen() {
   // a manual refresh reports its outcome; the pull-to-refresh spinner already shows progress
   const refreshNow = () => {
     setNotice(undefined);
+    if (v.account.providerId === 'codex') refreshPublic();
     refresh.mutate(undefined, {
       onSuccess: (outcome) => {
         const s = summarizeOutcomes({ [accountId]: outcome }, [v]);
@@ -212,7 +216,7 @@ export default function AccountDetailScreen() {
       {notice ? <RefreshNotice summary={notice} onClose={closeNotice} /> : null}
 
       <Band entering={enterFade} layout={layoutShift}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.three }}>
+        <View style={{ alignItems: 'flex-start', gap: Spacing.two }}>
           <ProviderIcon providerId={v.account.providerId} label={providerName} size={32} />
           <View style={{ flexShrink: 1 }}>
             <ThemedText type="subtitle">{providerName}</ThemedText>
@@ -272,6 +276,8 @@ export default function AccountDetailScreen() {
           ))}
         </Section>
       )}
+
+      {v.account.providerId === 'codex' ? <CodexResetSection now={now} /> : null}
 
       <SubscriptionSection
         key={`${accountId}:${v.price?.amount ?? ''}:${v.price?.currency ?? ''}`}

@@ -19,16 +19,7 @@ export function MeterRow({ meter, now, view }: { meter: Meter; now: Date; view?:
   const window = windowFor(meter, t);
   return (
     <View style={styles.row}>
-      <View style={styles.top}>
-        <ThemedText type="smallBold" style={styles.grow}>
-          {meterTitle(meter, t)}
-        </ThemedText>
-        {reset ? (
-          <ThemedText type="small" themeColor="textSecondary">
-            {reset}
-          </ThemedText>
-        ) : null}
-      </View>
+      <ThemedText type="smallBold">{meterTitle(meter, t)}</ThemedText>
       <WindowBar
         fraction={window.fraction}
         color={color}
@@ -36,6 +27,11 @@ export function MeterRow({ meter, now, view }: { meter: Meter; now: Date; view?:
         remaining={window.remaining}
         label={window.label}
       />
+      {reset ? (
+        <ThemedText type="small" themeColor="textSecondary" style={styles.number}>
+          {reset}
+        </ThemedText>
+      ) : null}
       {forecast ? (
         <ThemedText type="small" style={{ color: theme.warn }}>
           {'▲ '}
@@ -48,6 +44,5 @@ export function MeterRow({ meter, now, view }: { meter: Meter; now: Date; view?:
 
 const styles = StyleSheet.create({
   row: { gap: Spacing.one, paddingVertical: Spacing.one },
-  top: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.two },
-  grow: { flexShrink: 1 },
+  number: { fontVariant: ['tabular-nums'] },
 });

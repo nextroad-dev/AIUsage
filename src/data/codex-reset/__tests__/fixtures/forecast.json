@@ -1,0 +1,10 @@
+{
+  "probabilities": {
+    "rounded_24h": 15,
+    "rounded_48h": 28
+  },
+  "confidence": "low",
+  "last_reset_at": "2026-10-07T03:35:09.000Z",
+  "updated_at": "2026-10-08T15:17:24.537Z",
+  "official_signal": null
+}

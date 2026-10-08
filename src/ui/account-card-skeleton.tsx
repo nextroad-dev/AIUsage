@@ -7,7 +7,7 @@ import { useT } from '@/i18n';
 import { useBreathe } from '@/ui/skeleton';
 
 /**
- * Placeholder that mirrors the AccountCard geometry (badge + ring + two lines) while the first
+ * Placeholder that mirrors the AccountCard's single-column header and meter while the first
  * snapshot loads, with the shared breathing pulse (`useBreathe`). It reports no progress value,
  * since none is known yet.
  */
@@ -20,15 +20,16 @@ export function AccountCardSkeleton() {
   return (
     <Animated.View style={[styles.root, breathe]} accessible accessibilityLabel={t('Loading…')}>
       <View style={styles.header}>
+        <View style={[styles.icon, block]} />
         <View style={[styles.line, styles.title, block]} />
-        <View style={[styles.pill, block]} />
+        <View style={[styles.line, styles.narrow, block]} />
       </View>
       <View style={styles.body}>
-        <View style={[styles.ring, block]} />
-        <View style={styles.lines}>
-          <View style={[styles.line, styles.wide, block]} />
-          <View style={[styles.line, styles.narrow, block]} />
-        </View>
+        <View style={[styles.line, styles.title, block]} />
+        <View style={[styles.line, styles.narrow, block]} />
+        <View style={[styles.track, block]} />
+        <View style={[styles.line, styles.narrow, block]} />
+        <View style={[styles.line, styles.wide, block]} />
       </View>
     </Animated.View>
   );
@@ -36,13 +37,12 @@ export function AccountCardSkeleton() {
 
 const styles = StyleSheet.create({
   root: { gap: Spacing.two },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  body: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingTop: Spacing.one },
-  lines: { gap: Spacing.two, flexShrink: 1, flexGrow: 1 },
+  header: { gap: Spacing.two, alignItems: 'flex-start' },
+  body: { gap: Spacing.one, paddingTop: Spacing.one },
   line: { height: 12, borderRadius: Radius.pill },
   title: { width: 132 },
   wide: { width: '72%' },
   narrow: { width: '44%' },
-  pill: { width: 64, height: 20, borderRadius: Radius.pill },
-  ring: { width: 72, height: 72, borderRadius: 36 },
+  icon: { width: 24, height: 24, borderRadius: Radius.control },
+  track: { width: '100%', height: 8, borderRadius: Radius.pill },
 });

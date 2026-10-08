@@ -8,6 +8,8 @@ export interface CycleDeps extends RefreshDeps {
   notifier: Notifier;
   /** receives the fresh views after each cycle, e.g. to update the home screen widget */
   publish?: (views: AccountView[], now: Date) => Promise<void>;
+  /** Optional auxiliary public data. Runs independently; never delays personal usage/alerts. */
+  refreshPublicData?: () => Promise<void>;
 }
 
 export interface CycleResult {
@@ -43,6 +45,7 @@ async function maintenance(deps: CycleDeps): Promise<boolean> {
 async function doCycle(deps: CycleDeps, force: boolean): Promise<Omit<CycleResult, 'timedOut'>> {
   const { repos, now } = deps;
   const outcomes = await refreshAll(deps, { force });
+  void Promise.resolve().then(() => deps.refreshPublicData?.()).catch(() => {});
   const views = await loadViews(repos, now());
   const settings = mergeAlertSettings(await repos.settings.getJson('alerts', null));
   const events = evaluateAlerts({
