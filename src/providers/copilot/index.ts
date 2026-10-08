@@ -19,11 +19,12 @@ import type { Credential, FetchContext, Meter, ProviderPlugin, UsageSnapshot } f
  */
 
 /**
- * Register your own GitHub OAuth App (Settings > Developer settings > OAuth Apps) with "Enable
- * Device Flow" ticked, and put its client id in EXPO_PUBLIC_GITHUB_CLIENT_ID. Never reuse another
- * application's client id.
+ * Client id of this app's own GitHub OAuth App ("AI Usage", Device Flow enabled). It is public: the
+ * device flow has no client secret. A fork can point EXPO_PUBLIC_GITHUB_CLIENT_ID at its own app.
+ * Never reuse another application's client id.
  */
-export const GITHUB_CLIENT_ID: string = process.env.EXPO_PUBLIC_GITHUB_CLIENT_ID ?? '';
+export const GITHUB_CLIENT_ID: string =
+  process.env.EXPO_PUBLIC_GITHUB_CLIENT_ID || 'Ov23ligzAKuR0agmn5wO';
 
 export const githubDeviceConfig = (clientId: string): DeviceFlowConfig => ({
   deviceCodeUrl: 'https://github.com/login/device/code',
@@ -68,6 +69,8 @@ export function metersFromInternal(json: unknown): { meters: Meter[]; plan?: str
     const q = snapshots?.[b.key];
     if (!q || q.unlimited === true) continue;
     const entitlement = num(q.entitlement);
+    // a zero entitlement means the plan has no such allowance, not that it is used up
+    if (entitlement === 0) continue;
     const remaining = num(q.remaining) ?? num(q.quota_remaining);
     const percentRemaining = num(q.percent_remaining);
     if (entitlement !== undefined && entitlement > 0 && remaining !== undefined) {

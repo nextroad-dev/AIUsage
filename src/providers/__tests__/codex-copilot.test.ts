@@ -326,6 +326,21 @@ describe('Copilot usage', () => {
     expect(metersFromInternal({}).meters).toEqual([]);
   });
 
+  it('skips a bucket the plan has no allowance for instead of showing it used up', () => {
+    // seen live on an "individual" plan: premium_interactions with a zero entitlement
+    const { meters } = metersFromInternal({
+      quota_snapshots: {
+        premium_interactions: {
+          entitlement: 0,
+          remaining: 0,
+          percent_remaining: 0,
+          unlimited: false,
+        },
+      },
+    });
+    expect(meters).toEqual([]);
+  });
+
   it('uses the token scheme and editor headers and returns an ok snapshot', async () => {
     const f = fakeFetch({ [INTERNAL]: { json: internalBody } });
     const s = await copilotPlugin().fetchUsage(
