@@ -2,7 +2,9 @@
 
 | 平台 | 文件 | 说明 |
 |---|---|---|
-| Android | `AIUsage-*.apk` | 直接安装（需允许安装未知来源应用） |
+| Android（推荐） | `AIUsage-*-arm64-v8a.apk` | 64 位 ARM，适用于近年绝大多数手机 |
+| Android | `AIUsage-*-armeabi-v7a.apk` | 32 位 ARM，适用于较旧或入门机型 |
+| Android | `AIUsage-*-universal.apk` | 通用包，不确定机型时选它，体积最大 |
 | iOS | `AIUsage-*-unsigned.ipa` | 未签名，需用 Sideloadly / AltStore 等配合 Apple ID 签名安装 |
 
 **iOS 侧载须知**：免费 Apple ID 签名 7 天后过期，需要重签（数据保留）；免费账号不能使用 App Group，主屏小组件不会显示数据。

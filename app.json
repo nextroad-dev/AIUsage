@@ -58,7 +58,8 @@
           ]
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "./plugins/with-abi-splits"
     ],
     "experiments": {
       "typedRoutes": true,
