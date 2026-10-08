@@ -7,7 +7,7 @@ import { Band, Section } from '@/components/section';
 import { Screen } from '@/components/screen';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { formatAgo } from '@/core/format';
+import { formatAgo, formatPlan } from '@/core/format';
 import { usedFraction, visibleMeters } from '@/core/meter-utils';
 import type { Meter } from '@/core/types';
 import { choiceFor, type OverrideChoice } from '@/alerts/evaluate';
@@ -218,12 +218,12 @@ export default function AccountDetailScreen() {
             <ThemedText type="subtitle">{providerName}</ThemedText>
             {[
               v.account.label !== providerName ? v.account.label : undefined,
-              v.snapshot?.plan ?? v.account.manual?.planName,
+              v.snapshot?.plan ? formatPlan(v.snapshot.plan) : v.account.manual?.planName,
             ].filter(Boolean).length > 0 ? (
               <ThemedText type="small" themeColor="textSecondary">
                 {[
                   v.account.label !== providerName ? v.account.label : undefined,
-                  v.snapshot?.plan ?? v.account.manual?.planName,
+                  v.snapshot?.plan ? formatPlan(v.snapshot.plan) : v.account.manual?.planName,
                 ]
                   .filter(Boolean)
                   .join(' · ')}

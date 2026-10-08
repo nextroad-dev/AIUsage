@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
+import { formatPlan } from '@/core/format';
 import { visibleMeters } from '@/core/meter-utils';
 import { deriveStatus, type AccountView } from '@/data/summary';
 import { useTheme } from '@/hooks/use-theme';
@@ -35,7 +36,8 @@ export function AccountCard({
     view.meta?.id === 'relay' ? view.account.label : (view.meta?.name ?? view.account.providerId);
   const subtitle = [
     view.account.label !== name ? view.account.label : undefined,
-    view.snapshot?.plan ?? view.account.manual?.planName,
+    // a reported plan is tidied up; a name the user typed is shown as typed
+    view.snapshot?.plan ? formatPlan(view.snapshot.plan) : view.account.manual?.planName,
   ]
     .filter(Boolean)
     .join(' · ');
