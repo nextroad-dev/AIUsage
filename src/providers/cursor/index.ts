@@ -12,6 +12,7 @@ export const cursorCapture: CaptureSpec = {
   // English dashboard path: localized /cn/dashboard URLs have been reported to break the API.
   loginUrl: 'https://cursor.com/dashboard',
   cookieDomains: ['cursor.com'],
+  signInDomains: ['authkit.app'],
   anyOfCookies: CURSOR_COOKIES,
   loggedOutUrlHints: ['/api/auth/login', 'authkit.app', '/sign-in'],
 };

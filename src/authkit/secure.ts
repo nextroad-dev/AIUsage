@@ -38,7 +38,9 @@ export class ChunkedStore implements KeyValueStore {
     const previous = await this.readMeta(key);
     for (let i = 0; i < chunks.length; i++) await this.kv.set(`${key}.${i}`, chunks[i]);
     await this.kv.set(`${key}.meta`, JSON.stringify({ n: chunks.length }));
-    for (let i = chunks.length; i < (previous ?? 0); i++) await this.kv.delete(`${key}.${i}`);
+    // highest first, so chunks left by an interrupted shrink always start right after the last
+    // live one, where delete() looks for them
+    for (let i = (previous ?? 0) - 1; i >= chunks.length; i--) await this.kv.delete(`${key}.${i}`);
   }
 
   async get(key: string): Promise<string | null> {
@@ -53,10 +55,17 @@ export class ChunkedStore implements KeyValueStore {
     return out;
   }
 
+  /**
+   * Chunks first and the meta entry last: an interrupted delete keeps the meta, so a retry still
+   * finds every chunk. Chunks past the meta count (an interrupted shrink, or a first write that
+   * never reached its meta) are swept too.
+   */
   async delete(key: string): Promise<void> {
     const n = (await this.readMeta(key)) ?? 0;
-    await this.kv.delete(`${key}.meta`);
+    for (let i = n; (await this.kv.get(`${key}.${i}`)) !== null; i++)
+      await this.kv.delete(`${key}.${i}`);
     for (let i = 0; i < n; i++) await this.kv.delete(`${key}.${i}`);
+    await this.kv.delete(`${key}.meta`);
   }
 
   private async readMeta(key: string): Promise<number | null> {

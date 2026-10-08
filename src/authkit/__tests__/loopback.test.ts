@@ -18,6 +18,8 @@ jest.mock('../../../modules/usage-oauth-loopback', () => ({
   loopbackNativeModule: () => mockNativeModule,
 }));
 
+const STATE = 'q1w2e3r4t5y6u7i8o9p0-_';
+
 beforeEach(() => {
   mockNativeModule = { start: mockStart, stop: mockStop };
   mockStart.mockReset();
@@ -27,18 +29,24 @@ beforeEach(() => {
 describe('loopback native wrapper', () => {
   it('returns the bound port reported by the native listener', async () => {
     mockStart.mockResolvedValue({ port: 1457 });
-    await expect(startLoopback('codex', 1457)).resolves.toEqual({ port: 1457 });
-    expect(mockStart).toHaveBeenCalledWith('codex', 1457);
+    await expect(startLoopback('codex', 1457, STATE)).resolves.toEqual({ port: 1457 });
+    expect(mockStart).toHaveBeenCalledWith('codex', 1457, STATE);
     expect(isLoopbackAvailable()).toBe(true);
   });
 
   it('maps a refused port and a malformed native answer to port errors', async () => {
     mockStart.mockResolvedValue({ error: 'port-unavailable' });
-    await expect(startLoopback('openrouter', 51789)).rejects.toBeInstanceOf(LoopbackPortError);
+    await expect(startLoopback('openrouter', 51789, STATE)).rejects.toBeInstanceOf(
+      LoopbackPortError,
+    );
     mockStart.mockResolvedValue({});
-    await expect(startLoopback('openrouter', 51789)).rejects.toBeInstanceOf(LoopbackPortError);
+    await expect(startLoopback('openrouter', 51789, STATE)).rejects.toBeInstanceOf(
+      LoopbackPortError,
+    );
     mockStart.mockResolvedValue({ port: 0 });
-    await expect(startLoopback('openrouter', 51789)).rejects.toBeInstanceOf(LoopbackPortError);
+    await expect(startLoopback('openrouter', 51789, STATE)).rejects.toBeInstanceOf(
+      LoopbackPortError,
+    );
   });
 
   it('stops idempotently and never throws', async () => {
@@ -50,7 +58,9 @@ describe('loopback native wrapper', () => {
   it('reports a build without the native module instead of falling back silently', async () => {
     mockNativeModule = null;
     expect(isLoopbackAvailable()).toBe(false);
-    await expect(startLoopback('codex', 1455)).rejects.toBeInstanceOf(LoopbackUnavailableError);
+    await expect(startLoopback('codex', 1455, STATE)).rejects.toBeInstanceOf(
+      LoopbackUnavailableError,
+    );
     await expect(stopLoopback()).resolves.toBeUndefined();
     expect(mockStart).not.toHaveBeenCalled();
   });

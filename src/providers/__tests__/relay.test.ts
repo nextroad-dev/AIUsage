@@ -4,6 +4,7 @@ import {
   htmlTitle,
   newApiDisplay,
   inspectProvider,
+  InsecureBaseUrlError,
   normalizeBaseUrl,
   refreshBilling,
 } from '@/providers/relay/inspect';
@@ -193,6 +194,29 @@ describe('relay helpers', () => {
     expect(normalizeBaseUrl('http://192.168.1.5:3000/api/')).toBe('http://192.168.1.5:3000');
     expect(normalizeBaseUrl('https://x.dev/relay/v1')).toBe('https://x.dev/relay');
     expect(() => normalizeBaseUrl('  ')).toThrow();
+  });
+
+  it('refuses plain http:// outside this device and private networks', () => {
+    for (const ok of [
+      'http://localhost:3000',
+      'http://127.0.0.1:8080',
+      'http://10.0.0.2',
+      'http://172.20.1.1',
+      'http://nas.local',
+      'http://[::1]:3000',
+      'http://[fd12::1]',
+    ]) {
+      expect(() => normalizeBaseUrl(ok)).not.toThrow();
+    }
+    for (const bad of [
+      'http://api.example.com',
+      'http://8.8.8.8',
+      'http://172.32.0.1',
+      'http://192.169.1.1',
+      'http://localhost.example.com',
+    ]) {
+      expect(() => normalizeBaseUrl(bad)).toThrow(InsecureBaseUrlError);
+    }
   });
 
   it('reads page titles', () => {

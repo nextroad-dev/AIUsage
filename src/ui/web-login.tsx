@@ -12,7 +12,7 @@ import {
   tryCapture,
   type CookieSource,
 } from '@/authkit/web-session';
-import type { CaptureSpec } from '@/authkit/webview-capture';
+import { isAllowedNavigation, type CaptureSpec } from '@/authkit/webview-capture';
 import type { Credential } from '@/core/types';
 import { useT } from '@/i18n';
 import { Button, Field } from '@/ui/controls';
@@ -70,6 +70,10 @@ export function WebLoginPanel({
             <WebView
               source={{ uri: spec.loginUrl }}
               sharedCookiesEnabled
+              // subframes (captcha, identity widgets) load freely; the page itself stays on-domain
+              onShouldStartLoadWithRequest={(req) =>
+                req.isTopFrame === false || isAllowedNavigation(spec, req.url)
+              }
               injectedJavaScript={READ_COOKIE_JS}
               onMessage={(e: WebViewMessageEvent) => {
                 docCookie.current = e.nativeEvent.data;

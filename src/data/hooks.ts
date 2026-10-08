@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
 import { getPermission, requestPermission } from '@/alerts/expo-notifier';
+import { webKitCookies } from '@/authkit/expo-cookies';
 import {
   DEFAULT_ALERT_SETTINGS,
   mergeAlertSettings,
@@ -100,8 +101,13 @@ export function useAccountActions() {
       }),
     removeAll: () =>
       run(async () => {
-        await services!.accounts.removeAll();
-        await clearPrices(services!.repos);
+        try {
+          await services!.accounts.removeAll();
+        } finally {
+          await clearPrices(services!.repos);
+          // sessions from in-app web sign-in live in the WebView cookie store, not the keychain
+          await webKitCookies.clear?.().catch(() => undefined);
+        }
       }),
     setPrice: (id: string, price: Price | null) => run(() => setPrice(services!.repos, id, price)),
   };
