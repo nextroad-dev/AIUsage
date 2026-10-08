@@ -9,13 +9,30 @@ import { useAlertSettings, useBackgroundState, useNotificationPermission } from 
 import { useT } from '@/i18n';
 import { Button, Segmented } from '@/ui/controls';
 import { enterFade, exitFade, layoutShift } from '@/ui/motion';
+import { RowSkeleton } from '@/ui/skeleton';
 import { MultiChips, ToggleRow } from '@/ui/toggles';
 
 export default function AlertSettingsScreen() {
   const t = useT();
-  const { settings, update } = useAlertSettings();
+  const { settings, loaded, update } = useAlertSettings();
   const permission = useNotificationPermission();
-  const background = useBackgroundState(settings.backgroundRefresh);
+  const background = useBackgroundState(settings.backgroundRefresh, loaded);
+
+  // Until both the stored settings and the permission are known, show placeholders in the page's
+  // shape: rendering the defaults first would flash the permission banner and toggle sections that
+  // then jump away.
+  if (!loaded || permission.state === undefined) {
+    return (
+      <Screen safeTop={false}>
+        <Section title={t('Usage')}>
+          <RowSkeleton rows={3} value />
+        </Section>
+        <Section title={t('Background')}>
+          <RowSkeleton rows={1} value />
+        </Section>
+      </Screen>
+    );
+  }
 
   return (
     <Screen safeTop={false}>

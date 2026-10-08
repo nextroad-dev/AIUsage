@@ -6,6 +6,7 @@ import { setLocale } from '@/i18n';
 import { AccountCard } from '@/ui/account-card';
 import { Button, ColorSwatches, Field, Segmented } from '@/ui/controls';
 import { MeterRow } from '@/ui/meter-row';
+import { RowSkeleton } from '@/ui/skeleton';
 import { StatusBadge } from '@/ui/status-badge';
 import { defaultColumns } from '@/ui/option-grid';
 
@@ -267,5 +268,29 @@ describe('option grid', () => {
     expect(defaultColumns(['Default', 'Off', '70%', '80%'])).toBe(2);
     // five or more: three per row
     expect(defaultColumns(['Default', 'Off', '70%', '80%', '90%', '95%'])).toBe(3);
+  });
+});
+
+describe('RowSkeleton', () => {
+  it('announces loading and draws one line per row', async () => {
+    setLocale('en');
+    await render(<RowSkeleton rows={3} leading />);
+    const list = screen.getByLabelText('Loading…');
+    expect(list.props.accessibilityState).toEqual({ busy: true });
+    expect(list.props.children).toHaveLength(3);
+  });
+});
+
+describe('AccountCard plan', () => {
+  it('shows a reported plan with its first letter raised', async () => {
+    setLocale('en');
+    await render(
+      <AccountCard
+        view={{ ...view(), snapshot: snapshot([], 'plus') }}
+        now={NOW}
+        onPress={() => {}}
+      />,
+    );
+    expect(screen.getByText('Work · Plus')).toBeTruthy();
   });
 });
