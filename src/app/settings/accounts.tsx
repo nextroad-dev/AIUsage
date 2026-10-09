@@ -7,9 +7,8 @@ import { ThemedText } from '@/components/themed-text';
 import { useAccountViews } from '@/data/hooks';
 import { useT } from '@/i18n';
 import { Button } from '@/ui/controls';
-import { enterItem, exitFade } from '@/ui/motion';
+import { exitFade } from '@/ui/motion';
 import { ProviderIcon } from '@/ui/provider-icon';
-import { RowSkeleton } from '@/ui/skeleton';
 
 export default function AccountsSettingsScreen() {
   const router = useRouter();
@@ -20,9 +19,7 @@ export default function AccountsSettingsScreen() {
   return (
     <Screen safeTop={false}>
       <Section>
-        {accounts.isLoading && !accounts.data ? (
-          <RowSkeleton rows={3} leading />
-        ) : views.length === 0 ? (
+        {accounts.isLoading && !accounts.data ? null : views.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary">
             {t('No accounts yet')}
           </ThemedText>
@@ -31,7 +28,7 @@ export default function AccountsSettingsScreen() {
             const name =
               v.meta?.id === 'relay' ? v.account.label : (v.meta?.name ?? v.account.providerId);
             return (
-              <Animated.View key={v.account.id} entering={enterItem(i)} exiting={exitFade}>
+              <Animated.View key={v.account.id} exiting={exitFade}>
                 <Row
                   leading={<ProviderIcon providerId={v.account.providerId} label={name} />}
                   title={name}

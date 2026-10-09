@@ -1,12 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 
-import {
-  forecastSchema,
-  timelineSchema,
-  statusSchema,
-  isConfirmedReset,
-  codexState,
-} from '../models';
+import { forecastSchema } from '../models';
 import {
   CACHE_MS,
   CONSENT_KEY,
@@ -19,13 +13,9 @@ import {
 } from '../service';
 import { fakeFetch } from '@/test-utils/fetch';
 import forecast from './fixtures/forecast.json';
-import timeline from './fixtures/timeline.json';
-import status from './fixtures/status.json';
 
 const NOW = Date.parse(forecast.updated_at);
 const FORECAST = `${SOURCE}api/forecast`;
-const TIMELINE = `${SOURCE}api/timeline?locale=zh`;
-const STATUS = `${SOURCE}api/status-history`;
 
 function setup(routes: Parameters<typeof fakeFetch>[0]) {
   const values = new Map<string, unknown>([
@@ -52,16 +42,14 @@ function setup(routes: Parameters<typeof fakeFetch>[0]) {
 }
 
 describe('Codex Reset public contract (real responses captured 2026-10-08)', () => {
-  it('parses all three real responses and uses percent, not a fractional probability', () => {
-    expect(forecastSchema.parse(forecast).probabilities).toEqual({
-      rounded_24h: 15,
-      rounded_48h: 28,
+  it('parses the real response and uses percent, not a fractional probability', () => {
+    expect(forecastSchema.parse(forecast)).toEqual({
+      probabilities: { rounded_24h: 15, rounded_48h: 28 },
+      updated_at: forecast.updated_at,
     });
-    expect(timelineSchema.parse(timeline).events).toHaveLength(15);
-    expect(codexState(statusSchema.parse(status))).toBe('operational');
   });
 
-  it('degrades missing/invalid probabilities, timestamps and unknown confidence safely', () => {
+  it('degrades missing/invalid probabilities and timestamps safely and keeps nothing else', () => {
     expect(
       forecastSchema.parse({
         probabilities: { rounded_24h: 101, rounded_48h: '28' },
@@ -69,51 +57,13 @@ describe('Codex Reset public contract (real responses captured 2026-10-08)', () 
         last_reset_at: '2026-02-30T00:00:00Z',
         confidence: 'new-value',
       }),
-    ).toMatchObject({
+    ).toEqual({
       probabilities: { rounded_24h: null, rounded_48h: null },
       updated_at: null,
-      last_reset_at: null,
-      confidence: 'new-value',
     });
     expect(forecastSchema.parse({ probabilities: {} }).probabilities.rounded_24h).toBeUndefined();
     expect(forecastSchema.safeParse({ probabilities: null }).success).toBe(false);
     expect(forecastSchema.safeParse('<html>').success).toBe(false);
-  });
-
-  it('requires both documented confirmation fields and ignores malformed events', () => {
-    const parsed = timelineSchema.parse(timeline);
-    expect(parsed.events.filter(isConfirmedReset).map((e) => e.id)).toEqual([
-      '2107676072871600470',
-      '2106131810921136451',
-      '2103911959544610829',
-    ]);
-    const event = parsed.events.find(isConfirmedReset)!;
-    expect(isConfirmedReset({ ...event, announcement_state: 'none' })).toBe(false);
-    expect(isConfirmedReset({ ...event, announcement_state: null })).toBe(false);
-    expect(isConfirmedReset({ ...event, announcement_state: 'future-state' })).toBe(false);
-    expect(isConfirmedReset({ ...event, group: 'credits' })).toBe(false);
-    expect(
-      timelineSchema.parse({
-        events: [event, { ...event, announced_at: 'bad' }],
-      }).events,
-    ).toHaveLength(1);
-  });
-
-  it('does not mistake an unknown status enum for an outage or healthy service', () => {
-    expect(codexState(statusSchema.parse({ ...status, current: { codex: 'new-value' } }))).toBe(
-      'unknown',
-    );
-    expect(
-      codexState(statusSchema.parse({ ...status, current: { codex: 'partial_outage' } })),
-    ).toBe('incident');
-    expect(
-      codexState(
-        statusSchema.parse({
-          ...status,
-          current: { codex: 'operational', degraded: true },
-        }),
-      ),
-    ).toBe('incident');
   });
 });
 
@@ -231,11 +181,7 @@ describe('Codex Reset cache and network isolation', () => {
   });
 
   it('deduplicates simultaneous loads and manual/TanStack/background requests for 5 minutes', async () => {
-    const s = setup({
-      [FORECAST]: { json: forecast },
-      [TIMELINE]: { json: timeline },
-      [STATUS]: { json: status },
-    });
+    const s = setup({ [FORECAST]: { json: forecast } });
     const [a, b] = await Promise.all([s.service.load('forecast'), s.service.load('forecast')]);
     expect(a).toBe(b);
     const client = new QueryClient();
@@ -247,8 +193,8 @@ describe('Codex Reset cache and network isolation', () => {
     await client.fetchQuery(options);
     await client.fetchQuery(options);
     await s.service.refresh();
-    expect(s.f.calls.filter((c) => c.url === FORECAST)).toHaveLength(1);
-    expect(s.f.calls).toHaveLength(3);
+    // the forecast is the only public endpoint requested
+    expect(s.f.calls.map((c) => c.url)).toEqual([FORECAST]);
     s.clock.now += CACHE_MS;
     await s.service.load('forecast');
     expect(s.f.calls.filter((c) => c.url === FORECAST)).toHaveLength(2);
@@ -264,7 +210,7 @@ describe('Codex Reset cache and network isolation', () => {
     });
   });
 
-  it('shares Retry-After across endpoints and restarts, even for manual refresh', async () => {
+  it('keeps Retry-After across restarts, even for manual refresh', async () => {
     const s = setup({
       [FORECAST]: { status: 429, headers: { 'retry-after': '1200' } },
     });
@@ -274,7 +220,8 @@ describe('Codex Reset cache and network isolation', () => {
     s.clock.now += CACHE_MS;
     await s.service.load('forecast');
     const restarted = new CodexResetService(s.deps);
-    expect((await restarted.load('status')).error).toBe('rate-limited');
+    await restarted.refresh();
+    expect((await restarted.load('forecast')).error).toBe('rate-limited');
     expect(s.f.calls).toHaveLength(1);
     s.clock.now = first.retryAt;
     await restarted.load('forecast');

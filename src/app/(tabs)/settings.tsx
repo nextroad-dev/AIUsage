@@ -14,7 +14,7 @@ import { useT } from '@/i18n';
 import { usePreferences } from '@/providers/preferences';
 import { Button } from '@/ui/controls';
 import { haptics } from '@/ui/haptics';
-import { enterFade, enterItem, exitFade, layoutShift, PressableScale } from '@/ui/motion';
+import { exitFade, PressableScale } from '@/ui/motion';
 
 const GITHUB_HANDLE = 'nextroad-dev';
 const GITHUB_URL = 'https://github.com/nextroad-dev';
@@ -73,13 +73,48 @@ export default function SettingsScreen() {
     <Screen>
       <ScreenHeader title={t('Settings')} />
 
-      {/* sponsor card: the one rounded surface on the page, so it reads as an invitation, not a
-          setting. It can be closed for good; About then keeps a quiet link instead. */}
+      <Animated.View>
+        <Section title={t('General')}>
+          {menu.map((m, i) => (
+            <Animated.View key={m.title}>
+              <Row
+                leading={<MenuIcon name={m.icon} />}
+                title={m.title}
+                onPress={() => router.push(m.href)}
+              />
+            </Animated.View>
+          ))}
+        </Section>
+      </Animated.View>
+
+      <Animated.View>
+        <Section title={t('About')}>
+          <Row
+            title="GitHub"
+            value={GITHUB_HANDLE}
+            accessibilityHint={t('Open in the browser')}
+            onPress={() => Linking.openURL(`${GITHUB_URL}`)}
+          />
+          {sponsorDismissed ? (
+            <Animated.View>
+              <Row
+                title={t('Tip the author')}
+                value={t('Afdian')}
+                accessibilityHint={t('Open in the browser')}
+                onPress={() => Linking.openURL(SPONSOR_URL)}
+              />
+            </Animated.View>
+          ) : null}
+        </Section>
+      </Animated.View>
+
+      {/* sponsor card: after the settings, so the page opens on what people come for. The one
+          rounded surface on the page, so it reads as an invitation, not a setting. It can be
+          closed for good; About then keeps a quiet link instead. */}
       {sponsorDismissed ? null : (
         <Animated.View
-          entering={enterItem(0)}
           exiting={exitFade}
-          layout={layoutShift}
+
           style={{
             backgroundColor: theme.backgroundElement,
             borderColor: theme.border,
@@ -120,41 +155,6 @@ export default function SettingsScreen() {
           <Button title={t('Support on Afdian')} onPress={() => Linking.openURL(SPONSOR_URL)} />
         </Animated.View>
       )}
-
-      <Animated.View layout={layoutShift}>
-        <Section title={t('General')}>
-          {menu.map((m, i) => (
-            <Animated.View key={m.title} entering={enterItem(i + 1)}>
-              <Row
-                leading={<MenuIcon name={m.icon} />}
-                title={m.title}
-                onPress={() => router.push(m.href)}
-              />
-            </Animated.View>
-          ))}
-        </Section>
-      </Animated.View>
-
-      <Animated.View layout={layoutShift}>
-        <Section title={t('About')}>
-          <Row
-            title="GitHub"
-            value={GITHUB_HANDLE}
-            accessibilityHint={t('Open in the browser')}
-            onPress={() => Linking.openURL(`${GITHUB_URL}`)}
-          />
-          {sponsorDismissed ? (
-            <Animated.View entering={enterFade}>
-              <Row
-                title={t('Tip the author')}
-                value={t('Afdian')}
-                accessibilityHint={t('Open in the browser')}
-                onPress={() => Linking.openURL(SPONSOR_URL)}
-              />
-            </Animated.View>
-          ) : null}
-        </Section>
-      </Animated.View>
 
       {/* the build, quietly at the very end of the page */}
       <ThemedText

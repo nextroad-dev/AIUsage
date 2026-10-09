@@ -68,11 +68,10 @@ describe('mergeAlertSettings', () => {
     expect(
       mergeAlertSettings({ thresholds: [0.95, 0.8, 0.8, -1, 0, 9, NaN as never] }).thresholds,
     ).toEqual([0.8, 0.95]);
-    expect(mergeAlertSettings({ resetSoon: { hours: 12 } as never }).resetSoon).toEqual({
-      enabled: false,
-      hours: 12,
-      maxUsedFraction: 0.5,
-    });
+    // a stored setting from the removed "remind me before a reset" rule is dropped
+    expect(mergeAlertSettings({ resetSoon: { enabled: true } } as never)).not.toHaveProperty(
+      'resetSoon',
+    );
     expect(mergeAlertSettings({ enabled: false }).enabled).toBe(false);
   });
 });
@@ -85,8 +84,8 @@ describe('usage-over rule', () => {
   it('fires for the highest crossed threshold and reports the lower ones for silent marking', () => {
     const [e] = run([view([pct('weekly', 96, inHours(5))])]);
     expect(e.kind).toBe('usage-over');
-    expect(e.title).toBe('GLM · Work: Weekly at 96%');
-    expect(e.body).toBe('Resets in 5h 0m.');
+    expect(e.title).toBe('Weekly at 96%');
+    expect(e.body).toBe('GLM (Work): resets in 5h 0m.');
     expect(e.ruleId).toContain('|usage-over|0.95');
     expect(e.alsoMarkFired?.map((x) => x.ruleId)).toEqual([
       expect.stringContaining('|usage-over|0.8'),
@@ -98,7 +97,7 @@ describe('usage-over rule', () => {
       view([pct('weekly', 85, inHours(5), 'opus'), pct('weekly', 85, inHours(5), 'sonnet')]),
     ]);
     expect(events).toHaveLength(2);
-    expect(events[0].title).toContain('Weekly · opus');
+    expect(events[0].title).toContain('Weekly (opus)');
     expect(new Set(events.map((e) => e.ruleId)).size).toBe(2);
   });
 
@@ -152,29 +151,16 @@ describe('usage-over rule', () => {
   });
 });
 
-describe('reset-soon-unused rule', () => {
-  const on = { resetSoon: { enabled: true, hours: 6, maxUsedFraction: 0.5 } };
-  it('fires when a reset is near and most of the quota is unused', () => {
-    const [e] = run([view([pct('weekly', 20, inHours(4))])], on);
-    expect(e.kind).toBe('reset-soon-unused');
-    expect(e.body).toBe('80% unused, resets in 4h 0m.');
-  });
-  it('is off by default and does not fire when far from reset, heavily used, or already reset', () => {
-    expect(run([view([pct('weekly', 20, inHours(4))])])).toEqual([]);
-    expect(run([view([pct('weekly', 20, inHours(7))])], on)).toEqual([]);
-    expect(run([view([pct('weekly', 60, inHours(4))])], on)).toEqual([]);
-    expect(run([view([pct('weekly', 20, inHours(-1))])], on)).toEqual([]);
-  });
-  it('is silenced by a per-meter off override', () => {
-    const off: AlertRule = {
-      id: 'o',
-      accountId: 'a',
-      meterId: 'weekly',
-      kind: 'usage-over',
-      threshold: 1,
-      enabled: false,
-    };
-    expect(run([view([pct('weekly', 20, inHours(4))])], on, [off])).toEqual([]);
+describe('reset notices for windows that are not used up', () => {
+  it('never fire for an unused or partly used window, however often its reset time moves', () => {
+    // an idle 5-hour window reports a reset a full window ahead on every refresh
+    const settings = { windowReset: true, resetSoon: { enabled: true, hours: 6 } } as never;
+    for (const hours of [5, 4.9, 4.8]) {
+      for (const used of [0, 20, 99]) {
+        const events = run([view([pct('session', used, inHours(hours))])], settings);
+        expect(events.filter((e) => e.kind !== 'usage-over')).toEqual([]);
+      }
+    }
   });
 });
 
@@ -185,7 +171,8 @@ describe('auth-expired rule', () => {
   it('fires once per expiry (key changes only after a new success)', () => {
     const [e] = run([expired]);
     expect(e.kind).toBe('auth-expired');
-    expect(e.title).toBe('GLM · Work: sign in again');
+    expect(e.title).toBe('Sign in again');
+    expect(e.body).toBe('GLM (Work): the login was rejected, usage cannot update.');
     const later = view([], {
       health: {
         accountId: 'a',
@@ -216,7 +203,8 @@ describe('window-reset rule', () => {
   it('schedules a "quota is back" notice at the reset of a used-up window', () => {
     const [e] = resets([view([pct('session', 100, inHours(2))])]);
     expect(e.at).toBe(NOW.getTime() + 2 * 3_600_000);
-    expect(e.title).toBe('GLM · Work: 5-hour window has reset');
+    expect(e.title).toBe('5-hour window has reset');
+    expect(e.body).toBe('GLM (Work): the quota is available again.');
     expect(e.ruleId).toBe('a|session|window-reset');
   });
 
@@ -250,8 +238,8 @@ describe('renewal-soon rule', () => {
 
   it('reminds within the chosen number of days, once per renewal date', () => {
     const [e] = renewals(withRenewal(2));
-    expect(e.title).toContain('GLM · Work: plan ends or renews');
-    expect(e.body).toBe('In 2 days. Check your subscription if you do not plan to keep it.');
+    expect(e.title).toMatch(/^Plan ends /);
+    expect(e.body).toBe('GLM (Work): ends or renews in 2 days.');
     expect(e.cycleKey).toBe(`a:renew:${Date.parse(inHours(48))}`);
   });
 

@@ -21,8 +21,6 @@ const consentSchema = z.object({
 });
 const paths: Record<Endpoint, string> = {
   forecast: 'forecast',
-  timeline: 'timeline',
-  status: 'status-history',
 };
 
 export type DataError = 'rate-limited' | 'timeout' | 'invalid' | 'unavailable';
@@ -142,7 +140,6 @@ export class CodexResetService {
   }
 
   load<K extends Endpoint>(endpoint: K): Promise<CachedData<Payloads[K]>> {
-    // The zh timeline includes original English summaries too: one bilingual shared copy.
     const key = endpoint;
     const inflight = this.running.get(key);
     if (inflight) return inflight as Promise<CachedData<Payloads[K]>>;
@@ -199,7 +196,7 @@ export class CodexResetService {
     let expires: string | undefined;
     try {
       const result = await requestJson(
-        `${SOURCE}api/${paths[endpoint]}${endpoint === 'timeline' ? '?locale=zh' : ''}`,
+        `${SOURCE}api/${paths[endpoint]}`,
         {
           timeoutMs: TIMEOUT_MS,
           headers: { 'User-Agent': USER_AGENT },
@@ -275,9 +272,7 @@ export class CodexResetService {
   }
 
   async refresh(): Promise<void> {
-    await Promise.all(
-      (['forecast', 'timeline', 'status'] as const).map((endpoint) => this.load(endpoint)),
-    );
+    await this.load('forecast');
   }
 }
 

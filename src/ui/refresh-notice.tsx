@@ -8,6 +8,7 @@ import type { RefreshSummary } from '@/data/refresh-summary';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
 import { exitFade, layoutShift, Motion, PressableScale } from '@/ui/motion';
+import { Notice } from '@/ui/notice';
 
 const SHOW_OK_MS = 2500;
 const SHOW_FAILED_MS = 7000;
@@ -64,18 +65,16 @@ export function RefreshNotice({
               : t('Updated {n} accounts', { n: summary.updated })}
           </ThemedText>
         ) : summary.kind === 'timeout' ? (
-          <ThemedText type="small" style={{ color }}>
-            {'▲ '}
+          <Notice color={color}>
             {t('Refresh took too long. Some accounts may update a little later.')}
-          </ThemedText>
+          </Notice>
         ) : (
           <>
-            <ThemedText type="smallBold" style={{ color }}>
-              {'▲ '}
+            <Notice color={color} bold>
               {summary.failed.length === 1
                 ? t('1 account could not be refreshed')
                 : t('{n} accounts could not be refreshed', { n: summary.failed.length })}
-            </ThemedText>
+            </Notice>
             {summary.failed.map((f) => (
               <View key={f.name} style={{ flexDirection: 'row', gap: Spacing.one }}>
                 <ThemedText type="small" style={{ flexShrink: 0 }}>

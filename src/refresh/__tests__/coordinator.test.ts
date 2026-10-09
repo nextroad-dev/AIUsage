@@ -68,8 +68,6 @@ describe('runRefreshCycle', () => {
       },
       [POE]: { json: { current_point_balance: 100 } },
       [`${SOURCE}api/forecast`]: { status: 401 },
-      [`${SOURCE}api/timeline?locale=zh`]: { status: 500 },
-      [`${SOURCE}api/status-history`]: { status: 503 },
     });
     // Match the production Expo driver's serialized transactions; the basic memory fake
     // rejects overlapping transactions from two otherwise successful provider refreshes.

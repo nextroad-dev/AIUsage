@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -7,14 +8,9 @@ import type { Meter } from '@/core/types';
 import { useT } from '@/i18n';
 import type { AccountView } from '@/data/summary';
 import { useTheme } from '@/hooks/use-theme';
-import {
-  forecastText,
-  meterTitle,
-  resetShort,
-  resetText,
-  useLevelColor,
-} from '@/ui/meter-text';
+import { forecastText, meterTitle, resetShort, resetText, useLevelColor } from '@/ui/meter-text';
 import { windowFor, WindowBar } from '@/ui/window-bar';
+import { Notice } from '@/ui/notice';
 
 /** Above this font scale a one-line row stops fitting; the compact row stacks instead. */
 const STACK_AT_FONT_SCALE = 1.3;
@@ -54,12 +50,7 @@ export function MeterRow({
           {reset}
         </ThemedText>
       ) : null}
-      {forecast ? (
-        <ThemedText type="small" style={{ color: theme.warn }}>
-          {'▲ '}
-          {forecast}
-        </ThemedText>
-      ) : null}
+      {forecast ? <Notice color={theme.warn}>{forecast}</Notice> : null}
     </View>
   );
 }
@@ -81,8 +72,6 @@ function CompactMeterRow({
 }) {
   const t = useT();
   const theme = useTheme();
-  const { fontScale } = useWindowDimensions();
-  const stacked = fontScale >= STACK_AT_FONT_SCALE;
   const title = meterTitle(meter, t);
   const fraction = usedFraction(meter);
   const window = windowFor(meter, t);
@@ -93,20 +82,72 @@ function CompactMeterRow({
   const valueColor = fraction !== undefined && fraction >= 0.6 ? color : theme.text;
   const label = [
     title,
-    fraction === undefined ? `${window.label ?? t('used')} ${window.used}` : `${t('used')} ${value}`,
+    fraction === undefined
+      ? `${window.label ?? t('used')} ${window.used}`
+      : `${t('used')} ${value}`,
     reset,
     forecast,
   ]
     .filter(Boolean)
     .join(', ');
 
+  return (
+    <CompactRow
+      title={title}
+      fraction={fraction}
+      color={color}
+      pace={elapsedFraction(meter, now)}
+      value={value}
+      valueColor={valueColor}
+      trailing={short}
+      trailingLong={reset}
+      accessibilityLabel={label}
+    >
+      {forecast ? <Notice color={theme.warn}>{forecast}</Notice> : null}
+    </CompactRow>
+  );
+}
+
+/**
+ * The overview's one-line row: name, bar, value, a short trailing text (countdown or band).
+ * Shared by quota meters and the reset odds so their columns line up. Stacks into three lines
+ * at large font scales.
+ */
+export function CompactRow({
+  title,
+  fraction,
+  color,
+  pace,
+  value,
+  valueColor,
+  trailing,
+  trailingLong,
+  accessibilityLabel,
+  children,
+}: {
+  title: string;
+  /** 0..1 bar fill; no bar when undefined (balances) */
+  fraction?: number;
+  color: string;
+  pace?: number;
+  value: string;
+  valueColor: string;
+  trailing?: string;
+  /** what the stacked layout prints instead of `trailing` (e.g. the full reset sentence) */
+  trailingLong?: string;
+  accessibilityLabel: string;
+  children?: ReactNode;
+}) {
+  const { fontScale } = useWindowDimensions();
+  const stacked = fontScale >= STACK_AT_FONT_SCALE;
   const bar =
     fraction === undefined ? null : (
-      <WindowBar fraction={fraction} color={color} used="" pace={elapsedFraction(meter, now)} bare />
+      <WindowBar fraction={fraction} color={color} used="" pace={pace} bare />
     );
+  const long = trailingLong ?? trailing;
 
   return (
-    <View accessible accessibilityLabel={label} style={styles.compact}>
+    <View accessible accessibilityLabel={accessibilityLabel} style={styles.compact}>
       {stacked ? (
         <View style={styles.stack}>
           <View style={styles.line}>
@@ -118,9 +159,9 @@ function CompactMeterRow({
             </ThemedText>
           </View>
           {bar}
-          {reset ? (
+          {long ? (
             <ThemedText type="small" themeColor="textSecondary" style={styles.number}>
-              {reset}
+              {long}
             </ThemedText>
           ) : null}
         </View>
@@ -149,16 +190,11 @@ function CompactMeterRow({
             numberOfLines={1}
             style={[styles.number, styles.reset]}
           >
-            {short ?? ''}
+            {trailing ?? ''}
           </ThemedText>
         </View>
       )}
-      {forecast ? (
-        <ThemedText type="small" style={[styles.number, { color: theme.warn }]}>
-          {'▲ '}
-          {forecast}
-        </ThemedText>
-      ) : null}
+      {children}
     </View>
   );
 }
@@ -170,7 +206,8 @@ const styles = StyleSheet.create({
   stack: { gap: Spacing.one },
   line: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, minHeight: 24 },
   flex: { flex: 1 },
-  title: { width: 76 },
+  // a minimum, not a fixed width: a longer name widens its own column instead of being cut off
+  title: { minWidth: 88, flexShrink: 0 },
   value: { minWidth: 40, textAlign: 'right' },
   reset: { minWidth: 52, textAlign: 'right' },
 });

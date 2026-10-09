@@ -25,6 +25,7 @@ import { Button, Field } from '@/ui/controls';
 import { unlimitedKeyHint } from '@/ui/relay-hints';
 import { haptics } from '@/ui/haptics';
 import { enterFade, enterItem, exitFade, layoutShift } from '@/ui/motion';
+import { Notice } from '@/ui/notice';
 
 /**
  * Add an API relay from just its address and key: "Detect" recognises the software, the site name
@@ -186,7 +187,7 @@ export default function AddRelayScreen() {
                   result.provider.baseUrl.replace(/^https?:\/\//, ''),
                 ]
                   .filter(Boolean)
-                  .join(' · ')}
+                  .join('  ')}
               </ThemedText>
             </Animated.View>
 
@@ -219,19 +220,15 @@ export default function AddRelayScreen() {
                 ) : null}
               </Animated.View>
             ) : (
-              <ThemedText type="small" style={{ color: theme.warn }}>
-                {'▲ '}
+              <Notice color={theme.warn}>
                 {t('This site does not expose a balance for this key, so it cannot be tracked.')}
-              </ThemedText>
+              </Notice>
             )}
 
             {/* an unlimited key has no ceiling to measure against: say how to set one */}
             {b?.supported && b.unlimited ? (
               <Animated.View entering={enterItem(2)}>
-                <ThemedText type="small" style={{ color: theme.warn }}>
-                  {'▲ '}
-                  {unlimitedKeyHint(result.provider.type, t)}
-                </ThemedText>
+                <Notice color={theme.warn}>{unlimitedKeyHint(result.provider.type, t)}</Notice>
               </Animated.View>
             ) : null}
 
@@ -252,7 +249,7 @@ export default function AddRelayScreen() {
                   : result.key.valid
                     ? `● ${t('Key is valid')}`
                     : `○ ${t('Key could not be checked')}`}
-                {result.capabilities.models ? ` · ${t('OpenAI compatible')}` : ''}
+                {result.capabilities.models ? `  ${t('OpenAI compatible')}` : ''}
               </ThemedText>
             </Animated.View>
           </Section>

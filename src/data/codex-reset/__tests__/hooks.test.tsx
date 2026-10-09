@@ -5,12 +5,10 @@ import { AppState, type AppStateStatus } from 'react-native';
 
 import { useServices } from '@/data/hooks';
 import { fakeFetch } from '@/test-utils/fetch';
-import { useCodexReset, useRefreshCodexReset } from '../hooks';
+import { useCodexResetForecast, useRefreshCodexReset } from '../hooks';
 import { useCodexResetPreference } from '../preferences';
 import { CACHE_MS, CONSENT_KEY, CodexResetService, SOURCE } from '../service';
 import forecast from './fixtures/forecast.json';
-import timeline from './fixtures/timeline.json';
-import status from './fixtures/status.json';
 
 jest.mock('@/data/hooks', () => ({ useServices: jest.fn() }));
 jest.mock('expo-router', () => ({
@@ -32,8 +30,6 @@ it('shares real query hooks across components/remount/manual/background loads an
   ]);
   const f = fakeFetch({
     [`${SOURCE}api/forecast`]: { json: forecast },
-    [`${SOURCE}api/timeline?locale=zh`]: { json: timeline },
-    [`${SOURCE}api/status-history`]: { json: status },
   });
   const service = new CodexResetService({
     store: {
@@ -61,28 +57,28 @@ it('shares real query hooks across components/remount/manual/background loads an
   );
   try {
     const first = await renderHook(
-      () => ({ query: useCodexReset(), refresh: useRefreshCodexReset() }),
+      () => ({ query: useCodexResetForecast(), refresh: useRefreshCodexReset() }),
       { wrapper },
     );
     await waitFor(() =>
-      expect(first.result.current.query.status.data?.data?.current.codex).toBe('operational'),
+      expect(first.result.current.query.data?.data?.probabilities.rounded_24h).toBe(15),
     );
-    expect(f.calls).toHaveLength(3);
+    expect(f.calls).toHaveLength(1);
     await act(async () => {
       first.result.current.refresh();
       await service.refresh();
     });
-    expect(f.calls).toHaveLength(3);
+    expect(f.calls).toHaveLength(1);
     await first.unmount();
-    const second = await renderHook(() => useCodexReset(), { wrapper });
-    expect(second.result.current.forecast.data?.data?.probabilities.rounded_24h).toBe(15);
-    expect(f.calls).toHaveLength(3);
+    const second = await renderHook(() => useCodexResetForecast(), { wrapper });
+    expect(second.result.current.data?.data?.probabilities.rounded_24h).toBe(15);
+    expect(f.calls).toHaveLength(1);
     await act(async () => change('background'));
     jest.useFakeTimers();
     await act(async () => {
       await jest.advanceTimersByTimeAsync(CACHE_MS * 2);
     });
-    expect(f.calls).toHaveLength(3);
+    expect(f.calls).toHaveLength(1);
     await second.unmount();
   } finally {
     client.clear();
@@ -97,8 +93,6 @@ it('keeps mount/manual/background off by default and shares revocation across ac
   const values = new Map<string, unknown>();
   const f = fakeFetch({
     [`${SOURCE}api/forecast`]: { json: forecast },
-    [`${SOURCE}api/timeline?locale=zh`]: { json: timeline },
-    [`${SOURCE}api/status-history`]: { json: status },
   });
   const service = new CodexResetService({
     store: {
@@ -120,7 +114,7 @@ it('keeps mount/manual/background off by default and shares revocation across ac
   );
   const useScreen = () => ({
     preference: useCodexResetPreference(),
-    query: useCodexReset(),
+    query: useCodexResetForecast(),
     refresh: useRefreshCodexReset(),
   });
   try {
@@ -135,19 +129,19 @@ it('keeps mount/manual/background off by default and shares revocation across ac
     await act(async () => {
       await first.result.current.preference.setEnabled(true);
     });
-    await waitFor(() => expect(second.result.current.query.forecast.data?.data).toBeDefined());
-    expect(f.calls).toHaveLength(3);
+    await waitFor(() => expect(second.result.current.query.data?.data).toBeDefined());
+    expect(f.calls).toHaveLength(1);
     await act(async () => {
       await second.result.current.preference.setEnabled(false);
     });
     await waitFor(() => expect(first.result.current.preference.enabled).toBe(false));
     // Public cache remains local, but disabling every observer prevents reads and new requests.
-    expect(first.result.current.query.forecast.isFetching).toBe(false);
+    expect(first.result.current.query.isFetching).toBe(false);
     await act(async () => {
       first.result.current.refresh();
       await service.refresh();
     });
-    expect(f.calls).toHaveLength(3);
+    expect(f.calls).toHaveLength(1);
     await first.unmount();
     await second.unmount();
   } finally {

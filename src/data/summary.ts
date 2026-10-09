@@ -66,6 +66,35 @@ export function sortViews(views: AccountView[]): AccountView[] {
   );
 }
 
+/**
+ * Overview order: accounts that need the user (login expired, then errors) first, otherwise the
+ * user's own order. Unlike `sortViews` it does not depend on usage, so cards stay put when a
+ * refresh changes the numbers.
+ */
+export function orderViews(views: AccountView[]): AccountView[] {
+  const rank = (v: AccountView) => {
+    const s = deriveStatus(v).kind;
+    return s === 'authExpired' ? 0 : s === 'error' || s === 'unsupported' ? 1 : 2;
+  };
+  return [...views].sort(
+    (a, b) =>
+      rank(a) - rank(b) ||
+      a.account.sortOrder - b.account.sortOrder ||
+      a.account.createdAt - b.account.createdAt,
+  );
+}
+
+/** When any automatic account last fetched successfully (epoch ms). */
+export function lastUpdated(views: AccountView[]): number | undefined {
+  let best: number | undefined;
+  for (const v of views) {
+    if (v.source !== 'auto') continue;
+    const at = deriveStatus(v).lastSuccessAt;
+    if (at !== undefined && Number.isFinite(at) && (best === undefined || at > best)) best = at;
+  }
+  return best;
+}
+
 /** Sum of known monthly plan prices per currency: entered prices first, legacy manual configs otherwise. */
 export function subscriptionTotals(views: AccountView[]): Record<string, number> {
   const out: Record<string, number> = {};

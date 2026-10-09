@@ -9,16 +9,11 @@ export interface AlertSettings {
   enabled: boolean;
   /** used-fraction thresholds, ascending, e.g. [0.8, 0.95] */
   thresholds: number[];
-  resetSoon: {
-    enabled: boolean;
-    /** notify when a reset is within this many hours... */
-    hours: number;
-    /** ...and at most this fraction has been used */
-    maxUsedFraction: number;
-  };
   authExpired: boolean;
   /** notify the moment a time window that was used up (100%) resets */
   windowReset: boolean;
+  /** notify when a Codex weekly window restarts well before its scheduled reset */
+  earlyReset: boolean;
   /** remind before a paid plan renews or ends */
   renewal: { enabled: boolean; days: number };
   backgroundRefresh: boolean;
@@ -27,9 +22,9 @@ export interface AlertSettings {
 export const DEFAULT_ALERT_SETTINGS: AlertSettings = {
   enabled: true,
   thresholds: [0.8, 0.95],
-  resetSoon: { enabled: false, hours: 6, maxUsedFraction: 0.5 },
   authExpired: true,
   windowReset: true,
+  earlyReset: true,
   renewal: { enabled: true, days: 3 },
   backgroundRefresh: true,
 };
@@ -46,9 +41,9 @@ export function mergeAlertSettings(
   return {
     enabled: s.enabled ?? DEFAULT_ALERT_SETTINGS.enabled,
     thresholds,
-    resetSoon: { ...DEFAULT_ALERT_SETTINGS.resetSoon, ...s.resetSoon },
     authExpired: s.authExpired ?? DEFAULT_ALERT_SETTINGS.authExpired,
     windowReset: s.windowReset ?? DEFAULT_ALERT_SETTINGS.windowReset,
+    earlyReset: s.earlyReset ?? DEFAULT_ALERT_SETTINGS.earlyReset,
     renewal: { ...DEFAULT_ALERT_SETTINGS.renewal, ...s.renewal },
     backgroundRefresh: s.backgroundRefresh ?? DEFAULT_ALERT_SETTINGS.backgroundRefresh,
   };
@@ -106,11 +101,15 @@ const pctText = (f: number) => `${formatNumber(Math.round(f * 100), 0)}%`;
 
 function displayName(v: AccountView): string {
   const base = v.meta?.name ?? v.account.providerId;
-  return v.account.label && v.account.label !== base ? `${base} · ${v.account.label}` : base;
+  return v.account.label && v.account.label !== base
+    ? t('{label} ({detail})', { label: base, detail: v.account.label })
+    : base;
 }
 
 function meterName(m: Meter): string {
-  return m.scope.type === 'model' ? `${t(m.label)} · ${m.scope.name}` : t(m.label);
+  return m.scope.type === 'model'
+    ? t('{label} ({detail})', { label: t(m.label), detail: m.scope.name })
+    : t(m.label);
 }
 
 /**
@@ -137,8 +136,9 @@ export function evaluateAlerts(input: {
         cycleKey: `${v.account.id}:auth:${v.health?.lastSuccessAt ?? 0}`,
         kind: 'auth-expired',
         accountId: v.account.id,
-        title: t('{name}: sign in again', { name }),
-        body: t('The saved credential was rejected, so usage can no longer be updated.'),
+        // short title (it is truncated on the lock screen); the account goes in the body
+        title: t('Sign in again'),
+        body: t('{name}: the login was rejected, usage cannot update.', { name }),
       });
     }
 
@@ -152,13 +152,11 @@ export function evaluateAlerts(input: {
           cycleKey: `${v.account.id}:renew:${renewsAt}`,
           kind: 'renewal-soon',
           accountId: v.account.id,
-          title: t('{name}: plan ends or renews {date}', { name, date: formatDate(renewsAt) }),
+          title: t('Plan ends {date}', { date: formatDate(renewsAt) }),
           body:
             days <= 1
-              ? t('Within a day. Check your subscription if you do not plan to keep it.')
-              : t('In {n} days. Check your subscription if you do not plan to keep it.', {
-                  n: days,
-                }),
+              ? t('{name}: ends or renews within a day.', { name })
+              : t('{name}: ends or renews in {n} days.', { name, n: days }),
         });
       }
     }
@@ -185,19 +183,20 @@ export function evaluateAlerts(input: {
             cycleKey: ck,
             kind: 'usage-over',
             accountId: v.account.id,
-            title: t('{name}: {meter} at {pct}', { name, meter: meterName(m), pct: pctText(f) }),
+            title: t('{meter} at {pct}', { meter: meterName(m), pct: pctText(f) }),
             body:
               cd && !cd.elapsed
-                ? t('Resets in {time}.', { time: formatCountdown(cd.label) })
-                : t('Open the app to see details.'),
+                ? t('{name}: resets in {time}.', { name, time: formatCountdown(cd.label) })
+                : name,
             alsoMarkFired: crossed.slice(0, -1).map((th) => ({ ruleId: idOf(th), cycleKey: ck })),
           });
         }
       }
 
       // --- a used-up time window: count down to its reset, then say the quota is back ---
-      // Only a window that hit its limit gets one; a window that was barely touched resets
-      // silently. The dispatcher withdraws a pending notice once no event asks for it any more.
+      // The only reset notice. It starts once a window reads 100%; an unused or partly used
+      // window never gets one, even though an idle rolling window keeps reporting a reset time
+      // a full window ahead. The dispatcher withdraws a pending notice once nothing asks for it.
       const resetAt = m.resetsAt ? Date.parse(m.resetsAt) : NaN;
       if (
         settings.windowReset &&
@@ -212,28 +211,10 @@ export function evaluateAlerts(input: {
           cycleKey: cycleKey(v.account.id, m),
           kind: 'window-reset',
           accountId: v.account.id,
-          title: t('{name}: {meter} has reset', { name, meter: meterName(m) }),
-          body: t('The quota is available again.'),
+          title: t('{meter} has reset', { meter: meterName(m) }),
+          body: t('{name}: the quota is available again.', { name }),
           at: resetAt,
         });
-      }
-
-      // --- big reset coming up with most of the quota unused ---
-      if (settings.resetSoon.enabled && cd && !cd.elapsed && !(ov && !ov.enabled)) {
-        const hoursLeft = cd.ms / 3_600_000;
-        if (hoursLeft <= settings.resetSoon.hours && f <= settings.resetSoon.maxUsedFraction) {
-          events.push({
-            ruleId: `${v.account.id}|${key}|reset-soon-unused`,
-            cycleKey: cycleKey(v.account.id, m),
-            kind: 'reset-soon-unused',
-            accountId: v.account.id,
-            title: t('{name}: {meter} resets soon', { name, meter: meterName(m) }),
-            body: t('{pct} unused, resets in {time}.', {
-              pct: pctText(1 - f),
-              time: formatCountdown(cd.label),
-            }),
-          });
-        }
       }
     }
   }

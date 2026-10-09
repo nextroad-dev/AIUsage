@@ -1,6 +1,8 @@
 import {
   attentionScore,
   deriveStatus,
+  lastUpdated,
+  orderViews,
   sortViews,
   subscriptionTotals,
   type AccountView,
@@ -90,6 +92,36 @@ describe('sorting and totals', () => {
     ];
     expect(sortViews(views).map((v) => v.account.id)).toEqual(['expired', 'high', 'low', 'nodata']);
     expect(attentionScore(views[3])).toBe(1); // no ratio => -(-1)
+  });
+
+  it('orders the overview by problems first, then the user order, never by usage', () => {
+    const views = [
+      view('low', { snapshot: snap([pct(10)]) }, 0),
+      view('high', { snapshot: snap([pct(90)]) }, 1),
+      view('broken', { snapshot: snap([pct(5)]), health: health({ statusType: 'error' }) }, 2),
+      view(
+        'expired',
+        { snapshot: snap([pct(5)]), health: health({ statusType: 'authExpired' }) },
+        3,
+      ),
+    ];
+    expect(orderViews(views).map((v) => v.account.id)).toEqual([
+      'expired',
+      'broken',
+      'low',
+      'high',
+    ]);
+  });
+
+  it('reports the latest successful fetch across automatic accounts', () => {
+    expect(lastUpdated([])).toBeUndefined();
+    expect(
+      lastUpdated([
+        view('a', { snapshot: snap([pct(1)], '2026-10-06T01:00:00.000Z') }),
+        view('b', { snapshot: snap([pct(1)], '2026-10-06T03:00:00.000Z') }),
+        view('c', { source: 'legacy', snapshot: snap([pct(1)], '2026-10-07T00:00:00.000Z') }),
+      ]),
+    ).toBe(Date.parse('2026-10-06T03:00:00.000Z'));
   });
 
   it('sums manual plan prices per currency', () => {

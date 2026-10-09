@@ -1,4 +1,4 @@
-import { Linking, Platform, View } from 'react-native';
+import { Alert, Linking, Platform, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { Screen } from '@/components/screen';
@@ -6,10 +6,11 @@ import { Section } from '@/components/section';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useAlertSettings, useBackgroundState, useNotificationPermission } from '@/data/hooks';
+import { expoNotifier } from '@/alerts/expo-notifier';
 import { useT } from '@/i18n';
+import { haptics } from '@/ui/haptics';
 import { Button, Segmented } from '@/ui/controls';
-import { enterFade, exitFade, layoutShift } from '@/ui/motion';
-import { RowSkeleton } from '@/ui/skeleton';
+import { exitFade } from '@/ui/motion';
 import { MultiChips, ToggleRow } from '@/ui/toggles';
 
 export default function AlertSettingsScreen() {
@@ -17,27 +18,30 @@ export default function AlertSettingsScreen() {
   const { settings, loaded, update } = useAlertSettings();
   const permission = useNotificationPermission();
   const background = useBackgroundState(settings.backgroundRefresh, loaded);
+  const sendTest = () => {
+    haptics.tap();
+    expoNotifier
+      .send({
+        ruleId: 'test',
+        cycleKey: 'test',
+        kind: 'usage-over',
+        accountId: '',
+        title: t('Test notification'),
+        body: t('Alerts from AI Usage look like this.'),
+      })
+      .catch(() =>
+        Alert.alert(t('Could not send the notification'), t('Check the notification permission.')),
+      );
+  };
 
-  // Until both the stored settings and the permission are known, show placeholders in the page's
-  // shape: rendering the defaults first would flash the permission banner and toggle sections that
-  // then jump away.
-  if (!loaded || permission.state === undefined) {
-    return (
-      <Screen safeTop={false}>
-        <Section title={t('Usage')}>
-          <RowSkeleton rows={3} value />
-        </Section>
-        <Section title={t('Background')}>
-          <RowSkeleton rows={1} value />
-        </Section>
-      </Screen>
-    );
-  }
+  // Until both the stored settings and the permission are known (a local read, near instant),
+  // show nothing: rendering the defaults first would flash the permission banner and toggles.
+  if (!loaded || permission.state === undefined) return <Screen safeTop={false}>{null}</Screen>;
 
   return (
     <Screen safeTop={false}>
       {permission.state !== 'granted' && (
-        <Animated.View entering={enterFade} exiting={exitFade} layout={layoutShift}>
+        <Animated.View exiting={exitFade}>
           <Section bandStyle={{ gap: Spacing.two }}>
             <ThemedText type="small" themeColor="textSecondary">
               {permission.state === 'denied'
@@ -62,19 +66,14 @@ export default function AlertSettingsScreen() {
         </Animated.View>
       )}
 
-      <Section title={t('Usage')} bandStyle={{ gap: Spacing.three }}>
+      <Section title={t('Quota')} bandStyle={{ gap: Spacing.three }}>
         <ToggleRow
           label={t('Usage alerts')}
           value={settings.enabled}
           onChange={(v) => update({ enabled: v })}
         />
         {settings.enabled && (
-          <Animated.View
-            entering={enterFade}
-            exiting={exitFade}
-            layout={layoutShift}
-            style={{ gap: Spacing.three }}
-          >
+          <Animated.View exiting={exitFade} style={{ gap: Spacing.three }}>
             <View style={{ gap: Spacing.two }}>
               <ThemedText type="small" themeColor="textSecondary">
                 {t('Notify when usage reaches')}
@@ -90,34 +89,24 @@ export default function AlertSettingsScreen() {
                 }
               />
             </View>
-            <ToggleRow
-              label={t('Remind me before a reset')}
-              value={settings.resetSoon.enabled}
-              onChange={(v) => update({ resetSoon: { ...settings.resetSoon, enabled: v } })}
-            />
-            {settings.resetSoon.enabled && (
-              <Animated.View entering={enterFade} exiting={exitFade} layout={layoutShift}>
-                <Segmented
-                  options={[3, 6, 12, 24].map((h) => ({ value: h, label: t('{n}h', { n: h }) }))}
-                  value={settings.resetSoon.hours}
-                  onChange={(hours) => update({ resetSoon: { ...settings.resetSoon, hours } })}
-                />
-              </Animated.View>
-            )}
-            <Animated.View layout={layoutShift}>
+            <View style={{ gap: Spacing.three }}>
               <ToggleRow
                 label={t('Tell me when a window resets')}
-                hint={t('Only for windows that were used up.')}
                 value={settings.windowReset}
                 onChange={(v) => update({ windowReset: v })}
               />
-            </Animated.View>
+              <ToggleRow
+                label={t('Tell me when Codex resets early')}
+                value={settings.earlyReset}
+                onChange={(v) => update({ earlyReset: v })}
+              />
+            </View>
           </Animated.View>
         )}
       </Section>
 
       {settings.enabled && (
-        <Animated.View entering={enterFade} exiting={exitFade} layout={layoutShift}>
+        <Animated.View exiting={exitFade}>
           <Section title={t('Account')} bandStyle={{ gap: Spacing.three }}>
             <ToggleRow
               label={t('Remind me before a plan ends')}
@@ -125,7 +114,7 @@ export default function AlertSettingsScreen() {
               onChange={(v) => update({ renewal: { ...settings.renewal, enabled: v } })}
             />
             {settings.renewal.enabled && (
-              <Animated.View entering={enterFade} exiting={exitFade} layout={layoutShift}>
+              <Animated.View exiting={exitFade}>
                 <Segmented
                   label={t('Remind me before a plan ends')}
                   options={[1, 3, 7].map((d) => ({
@@ -137,7 +126,7 @@ export default function AlertSettingsScreen() {
                 />
               </Animated.View>
             )}
-            <Animated.View layout={layoutShift}>
+            <Animated.View>
               <ToggleRow
                 label={t('Tell me when a login expires')}
                 value={settings.authExpired}
@@ -148,7 +137,7 @@ export default function AlertSettingsScreen() {
         </Animated.View>
       )}
 
-      <Animated.View layout={layoutShift}>
+      <Animated.View>
         <Section title={t('Background')} bandStyle={{ gap: Spacing.three }}>
           <ToggleRow
             label={t('Background refresh')}
@@ -156,7 +145,7 @@ export default function AlertSettingsScreen() {
             onChange={(v) => update({ backgroundRefresh: v })}
           />
           {background.data === 'restricted' && (
-            <Animated.View entering={enterFade}>
+            <Animated.View>
               <ThemedText type="small" themeColor="textSecondary">
                 {t('Background refresh is restricted on this device.')}
               </ThemedText>
@@ -164,6 +153,14 @@ export default function AlertSettingsScreen() {
           )}
         </Section>
       </Animated.View>
+
+      {permission.state === 'granted' ? (
+        <Animated.View>
+          <Section>
+            <Button kind="secondary" title={t('Send a test notification')} onPress={sendTest} />
+          </Section>
+        </Animated.View>
+      ) : null}
     </Screen>
   );
 }

@@ -82,5 +82,6 @@ export function formatAgo(thenMs: number, nowMs: number, t: Translator = globalT
 export function formatCountdown(label: string, t: Translator = globalT): string {
   return label
     .replace(/(\d+)d/g, (_m, n) => t('{n}d', { n }))
-    .replace(/(\d+)h/g, (_m, n) => t('{n}h', { n }));
+    .replace(/(\d+)h/g, (_m, n) => t('{n}h', { n }))
+    .replace(/(\d+)m/g, (_m, n) => t('{n}m', { n }));
 }

@@ -54,8 +54,12 @@ describe('formatting', () => {
     expect(meterText(meter({ type: 'percent', used: 1 })).secondary).toBe('已用');
     expect(formatAgo(0, 5 * 60_000)).toBe('5 分钟前');
     expect(formatCountdown('2d 3h')).toBe('2天 3小时');
+    expect(formatCountdown('3h 12m')).toBe('3小时 12分');
+    expect(formatCountdown('45m')).toBe('45分');
+    expect(formatCountdown('<1m')).toBe('<1分');
     setLocale('en');
     expect(formatCountdown('2d 3h')).toBe('2d 3h');
+    expect(formatCountdown('3h 12m')).toBe('3h 12m');
   });
 });
 

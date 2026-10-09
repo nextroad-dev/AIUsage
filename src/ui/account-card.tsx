@@ -1,17 +1,15 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { formatPlan } from '@/core/format';
 import { visibleMeters } from '@/core/meter-utils';
 import { deriveStatus, type AccountView } from '@/data/summary';
-import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
-import { renewalInfo } from '@/ui/meter-text';
 import { MeterRow } from '@/ui/meter-row';
 import { PressableScale } from '@/ui/motion';
 import { ProviderIcon } from '@/ui/provider-icon';
-import { CodexResetChip } from '@/ui/codex-reset-chip';
 import { StatusBadge } from '@/ui/status-badge';
 
 export { forecastText, meterTitle, renewalInfo, resetText } from '@/ui/meter-text';
@@ -22,26 +20,26 @@ export function AccountCard({
   view,
   now,
   onPress,
+  footer,
 }: {
   view: AccountView;
   now: Date;
   onPress: () => void;
+  /** extra line under the meters, e.g. the Codex reset odds */
+  footer?: ReactNode;
 }) {
   const t = useT();
-  const theme = useTheme();
   const status = deriveStatus(view);
-  const renewal = renewalInfo(view, now, t);
   const meters = visibleMeters(view.snapshot?.meters ?? []);
   // a relay is known by its own site name, not the generic "API relay"
   const name =
     view.meta?.id === 'relay' ? view.account.label : (view.meta?.name ?? view.account.providerId);
+  // separate texts, spaced by the header's gap rather than joined with a separator
   const subtitle = [
     view.account.label !== name ? view.account.label : undefined,
     // a reported plan is tidied up; a name the user typed is shown as typed
     view.snapshot?.plan ? formatPlan(view.snapshot.plan) : view.account.manual?.planName,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  ].filter((x): x is string => !!x);
 
   return (
     <PressableScale
@@ -54,30 +52,22 @@ export function AccountCard({
         {/* One header line; it wraps instead of truncating when large fonts need the room. */}
         <View style={styles.header}>
           <ProviderIcon providerId={view.account.providerId} label={name} size={20} />
-          <ThemedText type="smallBold" numberOfLines={1} style={styles.shrink}>
+          <ThemedText type="default" numberOfLines={1} style={[styles.shrink, styles.name]}>
             {name}
           </ThemedText>
-          {subtitle ? (
+          {subtitle.map((part) => (
             <ThemedText
+              key={part}
               type="small"
               themeColor="textSecondary"
               numberOfLines={1}
               style={styles.shrink}
             >
-              {subtitle}
+              {part}
             </ThemedText>
-          ) : null}
+          ))}
+          {/* a problem shows as plain text; the plan end lives on the details screen */}
           <View style={styles.trailing}>
-            {view.account.providerId === 'codex' ? <CodexResetChip now={now} /> : null}
-            {/* the plan end shows here only when it is close; the details screen always has it */}
-            {renewal?.soon ? (
-              <View style={[styles.chip, { borderColor: theme.warn }]}>
-                <ThemedText type="small" style={{ color: theme.warn }}>
-                  {'▲ '}
-                  {renewal.left}
-                </ThemedText>
-              </View>
-            ) : null}
             <StatusBadge status={status} now={now} />
           </View>
         </View>
@@ -105,6 +95,7 @@ export function AccountCard({
                   : t('No usage data.')}
           </ThemedText>
         )}
+        {footer}
       </View>
     </PressableScale>
   );
@@ -120,6 +111,7 @@ const styles = StyleSheet.create({
     rowGap: Spacing.one,
   },
   shrink: { flexShrink: 1 },
+  name: { fontWeight: 700 },
   trailing: {
     marginLeft: 'auto',
     flexDirection: 'row',
@@ -127,12 +119,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     gap: Spacing.one,
-  },
-  chip: {
-    borderWidth: 1,
-    borderRadius: Radius.pill,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 1,
   },
   meters: { gap: Spacing.one },
 });
