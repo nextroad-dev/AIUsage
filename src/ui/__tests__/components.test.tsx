@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { Dimensions } from 'react-native';
 
 import type { Meter, UsageSnapshot } from '@/core/types';
 import type { AccountView } from '@/data/summary';
@@ -63,12 +64,32 @@ describe('AccountCard', () => {
     expect(screen.getByText('GLM Coding Plan (z.ai)')).toBeTruthy();
     expect(screen.getByText('Work · Pro')).toBeTruthy();
     expect(screen.getByText(/5-hour window/)).toBeTruthy();
-    expect(screen.getByText('Resets in 3h 12m')).toBeTruthy();
     expect(screen.getByText(/Weekly/)).toBeTruthy();
-    // every window gets its own bar, with the used and remaining share printed beside it
-    expect(screen.getByText('used 72%')).toBeTruthy();
-    expect(screen.getByText('Remaining 90%')).toBeTruthy();
+    // one line per window: used share and a short countdown; remaining is left to the details
+    expect(screen.getByText('72%')).toBeTruthy();
+    expect(screen.getByText('10%')).toBeTruthy();
+    // the test renderer reports a large font scale, so rows stack with the full countdown
+    expect(screen.getByText('Resets in 3h 12m')).toBeTruthy();
+    expect(screen.queryByText('Remaining 90%')).toBeNull();
+    // screen readers still get the full sentence
+    expect(screen.getByLabelText('5-hour window, used 72%, Resets in 3h 12m')).toBeTruthy();
     expect(screen.queryByText('Login expired')).toBeNull();
+  });
+
+  it('fits each window on one line at normal font sizes', async () => {
+    const window = Dimensions.get('window');
+    Dimensions.set({ window: { ...window, fontScale: 1 } });
+    try {
+      const v = view({
+        snapshot: snapshot([pct('session', 72, '2026-10-06T15:12:00Z')]),
+      });
+      await render(<AccountCard view={v} now={NOW} onPress={() => {}} />);
+      expect(screen.getByText('72%')).toBeTruthy();
+      expect(screen.getByText('3h12m')).toBeTruthy();
+      expect(screen.queryByText('Resets in 3h 12m')).toBeNull();
+    } finally {
+      Dimensions.set({ window });
+    }
   });
 
   it('keeps showing the last data without a staleness badge', async () => {

@@ -3,10 +3,37 @@
 // A test enforces coverage.
 export const zh: Record<string, string> = {
   // Codex Reset public data
-  'Show global reset forecast': '显示全局重置预测',
-  'Also shows public reset history and service status. Applies to all Codex accounts.':
-    '同时显示公共重置历史和服务状态，对所有 Codex 账号生效。',
-  'Off. No requests are sent to codex-reset.com.': '已关闭，不会向 codex-reset.com 发起请求。',
+  'Global reset radar': '全局重置雷达',
+  "See how likely OpenAI is to reset everyone's Codex limits early. Data comes from codex-reset.com, an independent site; you confirm before anything is requested.":
+    '查看 OpenAI 为所有人提前重置 Codex 额度的可能性。数据来自独立网站 codex-reset.com，发起任何请求前都会先征得你的同意。',
+  'Turn on': '开启',
+  'Turn off global reset radar': '关闭全局重置雷达',
+  'Chance of a global reset in the next 24 hours': '未来 24 小时发生全局重置的可能性',
+  Low: '较低',
+  Possible: '有可能',
+  High: '较高',
+  '48 hours: {percent}': '48 小时：{percent}',
+  Now: '现在',
+  '▲ Your weekly reset': '▲ 你的周额度重置',
+  'Your weekly reset is later →': '你的周额度重置更晚 →',
+  'Your weekly quota resets on its own in {time}.': '你的周额度将在 {time}后自行重置。',
+  'Your weekly quota is {used}% used and resets on its own in {time}.':
+    '你的周额度已用 {used}%，将在 {time}后自行重置。',
+  'Last 30 days': '近 30 天',
+  '{confirmed} confirmed · {signals} signals': '已确认 {confirmed} 天 · 信号 {signals} 天',
+  'Last 30 days: {confirmed} days with a confirmed reset, {signals} with an unconfirmed signal':
+    '近 30 天：{confirmed} 天有已确认重置，{signals} 天有未确认信号',
+  'Average interval': '平均间隔',
+  'about {n} days': '约 {n} 天',
+  'History and service status': '历史与服务状态',
+  'Outdated data': '数据已过期',
+  'Global reset {percent}%': '全局重置 {percent}%',
+  'Global reset signal': '全局重置信号',
+  'Global reset signal reported, not confirmed': '已报告全局重置信号，尚未确认',
+  'Global reset chance in 24 hours: {percent}%': '24 小时内全局重置的可能性：{percent}%',
+  // compact meter rows
+  Due: '待重置',
+  'Plan ends · {left}': '方案到期 · {left}',
   'About the data source': '了解数据来源',
   'Enable Codex Reset?': '开启 Codex Reset？',
   'Forecasts, global events and service status are fetched directly from codex-reset.com, an independent service, not OpenAI. Your API keys, ChatGPT access tokens, account IDs and personal usage are never sent to this site. Predictions do not guarantee your personal quota will recover. Allow public requests while this switch is on, including background refresh when available?':
@@ -17,8 +44,6 @@ export const zh: Record<string, string> = {
   'View status report': '查看故障报告',
   'Today {time}': '今天 {time}',
   'Yesterday {time}': '昨天 {time}',
-  'Global reset forecast': '全局重置预测',
-  'Extra reset chance in {hours} hours': '未来 {hours} 小时额外重置概率',
   Probability: '概率',
   Unknown: '未知',
   'Low confidence': '低置信度',
@@ -31,7 +56,6 @@ export const zh: Record<string, string> = {
   'A signal is not a confirmed reset.': '信号不代表重置已确认发生。',
   'Independent prediction, not an OpenAI quota API. A global reset does not guarantee your personal quota will recover.':
     '独立第三方预测，并非 OpenAI 官方额度接口。全局重置不保证你的个人额度恢复。',
-  'Recent global events': '近期全局事件',
   'Unconfirmed signals and other announcements are not confirmed global resets.':
     '未确认信号和其他公告不代表已确认的全局重置。',
   'Confirmed reset': '已确认重置',
@@ -42,15 +66,12 @@ export const zh: Record<string, string> = {
   'Other announcement': '其他公告',
   'No confirmed resets reported.': '暂无已确认的重置记录。',
   'View announcement': '查看公告',
-  'More history': '更多历史记录',
   'Show less': '收起',
-  'Codex service status': 'Codex 服务状态',
   'Codex operational': 'Codex 运行正常',
   'Codex service incident reported': '来源报告了 Codex 服务故障',
   'Codex status unknown': 'Codex 状态未知',
   'A platform incident is different from exhausted personal quota.':
     '平台服务故障与个人额度耗尽是不同的问题。',
-  'Recent incidents': '近期故障',
   'Ongoing incident': '故障处理中',
   'Status unknown': '状态未知',
   Resolved: '已恢复',

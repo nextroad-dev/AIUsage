@@ -1,25 +1,39 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Alert, Linking } from 'react-native';
 
+import type { Meter } from '@/core/types';
 import { forecastSchema, timelineSchema, statusSchema } from '@/data/codex-reset/models';
-import { useCodexReset } from '@/data/codex-reset/hooks';
+import { useCodexReset, useCodexResetForecast } from '@/data/codex-reset/hooks';
 import { useCodexResetPreference } from '@/data/codex-reset/preferences';
-import { confidenceText, eventText, localEventTime } from '@/data/codex-reset/format';
+import {
+  averageIntervalDays,
+  chanceBand,
+  confidenceText,
+  eventText,
+  localEventTime,
+  resetDays,
+} from '@/data/codex-reset/format';
 import { createTranslator, setLocale } from '@/i18n';
+import { CodexResetChip } from '@/ui/codex-reset-chip';
 import { CodexResetSection } from '@/ui/codex-reset-section';
 import forecast from '@/data/codex-reset/__tests__/fixtures/forecast.json';
 import timeline from '@/data/codex-reset/__tests__/fixtures/timeline.json';
 import status from '@/data/codex-reset/__tests__/fixtures/status.json';
 
-jest.mock('@/data/codex-reset/hooks', () => ({ useCodexReset: jest.fn() }));
+jest.mock('@/data/codex-reset/hooks', () => ({
+  useCodexReset: jest.fn(),
+  useCodexResetForecast: jest.fn(),
+}));
 jest.mock('@/data/codex-reset/preferences', () => ({ useCodexResetPreference: jest.fn() }));
 const usePreference = useCodexResetPreference as jest.Mock;
 const useReset = useCodexReset as jest.Mock;
+const useForecast = useCodexResetForecast as jest.Mock;
 const NOW = new Date(forecast.updated_at);
 const entry = (data: unknown) => ({
   data: { data, fetchedAt: NOW.getTime(), retryAt: 0, failures: 0 },
   isLoading: false,
 });
+const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 beforeEach(() => {
   setLocale('en');
@@ -41,35 +55,64 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-it('renders genuine probabilities, low confidence, confirmation labels and clickable source on each surface', async () => {
+const weekly = (hoursLeft: number): Meter => ({
+  id: 'weekly',
+  label: 'Weekly',
+  kind: { type: 'percent', used: 81 },
+  scope: { type: 'overall' },
+  resetsAt: new Date(NOW.getTime() + hoursLeft * 3_600_000).toISOString(),
+});
+
+it('answers first with the 24-hour chance and its band, then the evidence, with one source credit', async () => {
   const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
-  await render(<CodexResetSection now={NOW} />);
+  await render(<CodexResetSection now={NOW} weekly={weekly(30)} />);
+  expect(screen.getByText('Chance of a global reset in the next 24 hours')).toBeTruthy();
   expect(screen.getByText('15%')).toBeTruthy();
-  expect(screen.getByText('28%')).toBeTruthy();
+  expect(screen.getByText('Possible')).toBeTruthy();
+  expect(screen.getByText('48 hours: 28%')).toBeTruthy();
   expect(screen.getByText('Low-confidence forecast: treat these odds with caution.')).toBeTruthy();
-  expect(screen.getAllByText('Confirmed reset')).toHaveLength(2);
+  expect(
+    screen.getByText('Your weekly quota is 81% used and resets on its own in 1d 6h.'),
+  ).toBeTruthy();
+  // the strip is decorative for screen readers; the sentence above carries the same facts
+  expect(screen.getByText('▲ Your weekly reset', { includeHiddenElements: true })).toBeTruthy();
+  expect(screen.getByLabelText(/3 days with a confirmed reset/)).toBeTruthy();
+  expect(screen.getByText('about 5 days')).toBeTruthy();
   expect(screen.getByText(/A global reset does not guarantee your personal quota/)).toBeTruthy();
   expect(screen.getByText('Codex operational')).toBeTruthy();
+  // history and incidents wait behind one button
+  expect(screen.queryByText('Confirmed reset')).toBeNull();
   expect(screen.queryByText(status.incidents[0].name)).toBeNull();
-  await fireEvent.press(screen.getByText('Recent incidents'));
+  await fireEvent.press(screen.getByText('History and service status'));
+  expect(screen.getAllByText('Confirmed reset')).toHaveLength(3);
   expect(screen.getByText(status.incidents[0].name)).toBeTruthy();
-  expect(screen.getAllByRole('link', { name: 'Data: codex-reset.com' })).toHaveLength(3);
-  await fireEvent.press(screen.getAllByRole('link', { name: 'Data: codex-reset.com' })[0]);
+  expect(screen.getAllByRole('link', { name: 'Data: codex-reset.com' })).toHaveLength(1);
+  await fireEvent.press(screen.getByRole('link', { name: 'Data: codex-reset.com' }));
   expect(open).toHaveBeenCalledWith('https://codex-reset.com/');
+});
+
+it('pins a weekly reset beyond 48 hours to the end of the strip', async () => {
+  await render(<CodexResetSection now={NOW} weekly={weekly(53)} />);
+  expect(
+    screen.getByText('Your weekly reset is later →', { includeHiddenElements: true }),
+  ).toBeTruthy();
+  expect(
+    screen.getByText('Your weekly quota is 81% used and resets on its own in 2d 5h.'),
+  ).toBeTruthy();
 });
 
 it('shows Chinese copy and translated announcements and keeps local timestamps', async () => {
   setLocale('zh');
   await render(<CodexResetSection now={NOW} />);
-  expect(screen.getByText('全局重置预测')).toBeTruthy();
+  expect(screen.getByText('全局重置雷达')).toBeTruthy();
   expect(screen.getByText('15%')).toBeTruthy();
-  expect(screen.getAllByText('已确认重置')).toHaveLength(2);
-  // Before expansion, last-confirmed and its timeline entry share the same local time.
+  expect(screen.getByText('有可能')).toBeTruthy();
   expect(
-    screen.getAllByText(localEventTime(timeline.events[4].announced_at, 'zh', NOW)),
-  ).toHaveLength(2);
+    screen.getByText(new RegExp(escape(localEventTime(forecast.last_reset_at, 'zh', NOW)))),
+  ).toBeTruthy();
   expect(screen.queryByText(timeline.events[0].localized_summary!)).toBeNull();
-  await fireEvent.press(screen.getByText('更多历史记录'));
+  await fireEvent.press(screen.getByText('历史与服务状态'));
+  expect(screen.getAllByText('已确认重置')).toHaveLength(3);
   expect(screen.getByText(timeline.events[0].localized_summary!)).toBeTruthy();
   expect(screen.getByText('Codex 运行正常')).toBeTruthy();
 });
@@ -87,13 +130,17 @@ it('degrades missing probabilities and signals, warns on old cached data without
   };
   await render(<CodexResetSection now={new Date(NOW.getTime() + 3_600_000)} />);
   expect(screen.getAllByText('Unknown')).toHaveLength(2);
+  expect(screen.getByText('48 hours: Unknown')).toBeTruthy();
   expect(screen.getByText('Confidence unknown')).toBeTruthy();
   expect(
     screen.getAllByText('Outdated data — showing the last available copy.').length,
   ).toBeGreaterThan(0);
+  // one footnote for the card, not one per failed endpoint
   expect(
     screen.getAllByText('Codex Reset data unavailable. This does not indicate a Codex outage.'),
-  ).toHaveLength(2);
+  ).toHaveLength(1);
+  expect(screen.getByText('Outdated data')).toBeTruthy();
+  expect(screen.getByText('Codex status unknown')).toBeTruthy();
   expect(screen.queryByText('Codex service incident reported')).toBeNull();
   expect(screen.queryByText('Codex operational')).toBeNull();
 });
@@ -121,7 +168,7 @@ it('does not present a type=reset event as confirmed and renders an official sig
   });
   q.forecast.data.data.official_signal = { future_field: 'unknown' };
   await render(<CodexResetSection now={NOW} />);
-  await fireEvent.press(screen.getByText('More history'));
+  await fireEvent.press(screen.getByText('History and service status'));
   expect(screen.getByText('Unconfirmed reset signal')).toBeTruthy();
   expect(screen.queryByText('Confirmed reset')).toBeNull();
   expect(screen.getByText('A signal is not a confirmed reset.')).toBeTruthy();
@@ -166,7 +213,7 @@ it.each(['en', 'zh'] as const)(
     await render(<CodexResetSection now={NOW} />);
     expect(useReset).not.toHaveBeenCalled();
     expect(screen.queryByText('15%')).toBeNull();
-    await fireEvent(screen.getByRole('switch'), 'valueChange', true);
+    await fireEvent.press(screen.getByText(locale === 'zh' ? '开启' : 'Turn on'));
     const [, message, buttons] = alert.mock.calls[0];
     expect(message).toContain('codex-reset.com');
     expect(message).toContain('OpenAI');
@@ -184,7 +231,7 @@ it('disables immediately without another consent dialog and reports persistence 
   usePreference.mockReturnValue({ enabled: true, loaded: true, pending: false, setEnabled: save });
   const alert = jest.spyOn(Alert, 'alert');
   await render(<CodexResetSection now={NOW} />);
-  await fireEvent(screen.getByRole('switch'), 'valueChange', false);
+  await fireEvent.press(screen.getByText('Turn off global reset radar'));
   expect(save).toHaveBeenCalledWith(false);
   await waitFor(() =>
     expect(alert).toHaveBeenCalledWith(
@@ -215,4 +262,60 @@ it('formats today and yesterday using local calendar dates across a year boundar
       t('Yesterday {time}', { time: time(yesterday) }),
     );
   }
+});
+
+it('bands probabilities, marks 30 local days and averages confirmed intervals', () => {
+  expect([null, 0, 14, 15, 39, 40, 100].map(chanceBand)).toEqual([
+    undefined,
+    'low',
+    'low',
+    'possible',
+    'possible',
+    'high',
+    'high',
+  ]);
+  const events = timelineSchema.parse(timeline).events;
+  const days = resetDays(events, NOW);
+  expect(days).toHaveLength(30);
+  expect(days.filter((d) => d === 'confirmed')).toHaveLength(3);
+  // non-reset groups (credits, boost) never mark a day
+  expect(resetDays(events.filter((e) => e.group !== 'reset'), NOW).every((d) => !d)).toBe(true);
+  expect(averageIntervalDays(events.filter((e) => e.announcement_state === 'announced'))).toBe(5);
+  expect(averageIntervalDays(events.slice(4, 5))).toBeUndefined();
+});
+
+describe('CodexResetChip', () => {
+  const chip = (data: unknown) =>
+    useForecast.mockReturnValue({
+      data: { data: forecastSchema.parse(data), fetchedAt: NOW.getTime(), retryAt: 0, failures: 0 },
+    });
+
+  it('shows a possible-or-better 24-hour chance on the overview', async () => {
+    chip(forecast);
+    await render(<CodexResetChip now={NOW} />);
+    expect(screen.getByText('Global reset 15%')).toBeTruthy();
+  });
+
+  it('stays quiet for a low chance, for old data and before opt-in', async () => {
+    chip({ ...forecast, probabilities: { rounded_24h: 9, rounded_48h: 20 } });
+    await render(<CodexResetChip now={NOW} />);
+    expect(screen.queryByText(/Global reset/)).toBeNull();
+
+    chip(forecast);
+    await render(<CodexResetChip now={new Date(NOW.getTime() + 3_600_000)} />);
+    expect(screen.queryByText(/Global reset/)).toBeNull();
+
+    usePreference.mockReturnValue({ enabled: false, loaded: true, pending: false });
+    useForecast.mockClear();
+    await render(<CodexResetChip now={NOW} />);
+    expect(screen.queryByText(/Global reset/)).toBeNull();
+    expect(useForecast).not.toHaveBeenCalled();
+  });
+
+  it('labels an official signal without calling it confirmed', async () => {
+    chip({ ...forecast, probabilities: { rounded_24h: 5 }, official_signal: 'x' });
+    await render(<CodexResetChip now={NOW} />);
+    expect(screen.getByText('Global reset signal')).toBeTruthy();
+    expect(screen.getByLabelText('Global reset signal reported, not confirmed')).toBeTruthy();
+  });
 });

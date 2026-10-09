@@ -72,21 +72,40 @@ controlled response variations, not a claim that a live outage was observed.
 - Public 401/403 is a data-source failure, never a rejected ChatGPT credential. Public data
   failure is never evidence of an OpenAI outage. Stale status is explicitly labelled as old data.
 
-Each of the three data sections displays **Data: codex-reset.com**, linked to
-<https://codex-reset.com/> on that same surface. README and this document carry the credit too.
-Do not replace the on-screen credit with an About-page link. No data is republished via an API.
+The radar card displays **Data: codex-reset.com** once, linked to <https://codex-reset.com/>,
+next to the source update time; it covers forecast, history and status on that same surface.
+README and this document carry the credit too. Do not replace the on-screen credit with an
+About-page link. No data is republished via an API.
 
 ## UI and alerts
 
-The module reuses `Section`, `ToggleRow`, `Button`, theme colors and existing motion.
-Information is displayed in one column, including account headings and shared personal meters.
-Forecast percentages use theme-accent text, not personal quota bars. Personal meters keep their
-existing calculation and animation with used amount, bar, remaining amount and reset stacked.
-Confirmed history defaults to two rows; other announcements appear only when expanded. Expansion is bounded to
-ten confirmed and five other rows; the complete history remains available at the source.
-Operational status is compact; recent incidents are expandable. All interface copy is English
-and Chinese; `Intl.DateTimeFormat` follows the app language and device timezone. Today/yesterday
-use local calendar dates, with years shown for older-year events.
+Everything lives in one "Global reset radar" section on the Codex details screen, built from
+`Section`, `Button`, theme colors and existing motion. It answers first and shows evidence after:
+
+- Status chips: Codex operational / incident / unknown, plus "Outdated data" when any endpoint
+  is stale. An incident adds the line that it differs from exhausted personal quota.
+- The 24-hour chance as a large accent number with a word band (`chanceBand`: under 15% low,
+  15-39% possible, 40% and up high), then the 48-hour chance and confidence as 1-3 dots plus text.
+  Low confidence keeps its explicit warning.
+- A Now / 24h / 48h strip shaded by the two source odds. When the account's own `weekly` meter
+  has a future reset, a marker sits at its position (pinned to the end with an arrow past 48 h),
+  and a sentence states its used share and countdown. Odds are never extrapolated to that time.
+- A 30-day row of local calendar days: filled for a confirmed reset, outlined for an unconfirmed
+  `reset` signal; other groups are not marked. Last confirmed reset (relative and absolute) and
+  the average interval between confirmed resets (needs two) follow.
+- "History and service status" expands up to ten confirmed and five other announcements and
+  three incidents; the complete history remains available at the source.
+- One footnote: fetch error (once for the card), stale warning, source time and credit, and the
+  "Turn off" link. Off, the section is a short explanation and a "Turn on" button that opens the
+  same consent dialog.
+
+On the overview, a Codex card shows a "Global reset N%" chip only after opt-in, with fresh
+forecast data, and when the 24-hour band is possible or higher; an official signal shows
+"Global reset signal". It polls under the same focus/foreground gates and cache as the details
+screen and never changes the account's status or alerts.
+
+All interface copy is English and Chinese; `Intl.DateTimeFormat` follows the app language and
+device timezone. Today/yesterday use local calendar dates, with years shown for older-year events.
 
 Global reset notifications are intentionally deferred. Existing alerts are account/meter-cycle
 based. A global subscription needs a persistent first-enable baseline, event-ID deduplication

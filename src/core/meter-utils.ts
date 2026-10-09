@@ -98,3 +98,33 @@ export function cycleKey(accountId: string, m: Meter): string {
   const scope = m.scope.type === 'model' ? `:${m.scope.name}` : '';
   return `${accountId}:${m.id}${scope}:${m.resetsAt ?? 'none'}`;
 }
+
+const HOUR = 3_600_000;
+/** Window length by the meter ids providers share; calendar-month windows are handled apart. */
+const FIXED_WINDOWS: Record<string, number> = {
+  session: 5 * HOUR,
+  weekly: 7 * 24 * HOUR,
+  usage_weekly: 7 * 24 * HOUR,
+  today: 24 * HOUR,
+  usage_daily: 24 * HOUR,
+};
+const MONTHLY = new Set(['monthly', 'month', 'usage_monthly', 'premium', 'chat', 'completions']);
+
+/**
+ * How far through its window a meter is, 0..1: where an even pace would have the bar now.
+ * Undefined when the window length is not known for this meter id or the reset is missing/past.
+ */
+export function elapsedFraction(m: Meter, now: Date): number | undefined {
+  const end = m.resetsAt ? Date.parse(m.resetsAt) : NaN;
+  if (!Number.isFinite(end) || end <= now.getTime()) return undefined;
+  let start: number;
+  const fixed = FIXED_WINDOWS[m.id];
+  if (fixed) start = end - fixed;
+  else if (MONTHLY.has(m.id)) {
+    const d = new Date(end);
+    d.setMonth(d.getMonth() - 1);
+    start = d.getTime();
+  } else return undefined;
+  const f = (now.getTime() - start) / (end - start);
+  return f >= 0 && f <= 1 ? f : undefined;
+}

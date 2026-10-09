@@ -20,7 +20,8 @@ export function resetQuery(service: CodexResetService, endpoint: Endpoint) {
   };
 }
 
-export function useCodexReset() {
+/** Polls only while the screen is focused and the app is in the foreground, and only after opt-in. */
+function usePollOptions() {
   const service = useServices().data?.codexReset;
   const preference = useCodexResetPreference();
   const [focused, setFocused] = useState(false);
@@ -35,14 +36,21 @@ export function useCodexReset() {
     const sub = AppState.addEventListener('change', (state) => setActive(state === 'active'));
     return () => sub.remove();
   }, []);
-  const options = {
-    enabled: !!service && preference.enabled && focused && active,
-    staleTime: CACHE_MS,
-    gcTime: 24 * 60 * 60_000,
-    retry: false as const,
-    refetchInterval: CACHE_MS,
-    refetchIntervalInBackground: false,
+  return {
+    service,
+    options: {
+      enabled: !!service && preference.enabled && focused && active,
+      staleTime: CACHE_MS,
+      gcTime: 24 * 60 * 60_000,
+      retry: false as const,
+      refetchInterval: CACHE_MS,
+      refetchIntervalInBackground: false,
+    },
   };
+}
+
+export function useCodexReset() {
+  const { service, options } = usePollOptions();
   return {
     forecast: useQuery({
       ...options,
@@ -60,6 +68,16 @@ export function useCodexReset() {
       queryFn: () => service!.load('status'),
     }),
   };
+}
+
+/** Forecast alone, for the overview card; shares the cache and gates of the details screen. */
+export function useCodexResetForecast() {
+  const { service, options } = usePollOptions();
+  return useQuery({
+    ...options,
+    queryKey: resetKey('forecast'),
+    queryFn: () => service!.load('forecast'),
+  });
 }
 
 /** fetchQuery honours the same cache as mount/poll; the service also gates background reads. */

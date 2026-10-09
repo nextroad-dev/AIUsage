@@ -16,6 +16,13 @@ export function resetText(m: Meter, now: Date, t: Translator): string | undefine
   return c.elapsed ? t('Reset due') : t('Resets in {time}', { time: formatCountdown(c.label, t) });
 }
 
+/** Countdown without spaces ("2d5h") for the one-line row; the full sentence stays for screen readers. */
+export function resetShort(m: Meter, now: Date, t: Translator): string | undefined {
+  const c = countdown(m.resetsAt, now);
+  if (!c) return undefined;
+  return c.elapsed ? t('Due') : formatCountdown(c.label, t).replace(/\s+/g, '');
+}
+
 const keyOf = (m: Meter) => `${m.id}${m.scope.type === 'model' ? `:${m.scope.name}` : ''}`;
 
 /** "Runs out in 1h 20m at this pace" when the current pace empties the window before it resets. */
@@ -37,12 +44,16 @@ export function renewalInfo(
   view: AccountView,
   now: Date,
   t: Translator,
-): { text: string; soon: boolean } | undefined {
+): { text: string; left: string; soon: boolean } | undefined {
   const at = view.snapshot?.renewsAt ? Date.parse(view.snapshot.renewsAt) : NaN;
   if (!Number.isFinite(at) || at < now.getTime()) return undefined;
   const days = daysUntil(at, now.getTime());
   const left = days <= 1 ? t('within a day') : t('{n} days left', { n: days });
-  return { text: t('Plan until {date} · {left}', { date: formatDate(at), left }), soon: days <= 7 };
+  return {
+    text: t('Plan until {date} · {left}', { date: formatDate(at), left }),
+    left: t('Plan ends · {left}', { left }),
+    soon: days <= 7,
+  };
 }
 
 /** Level colour for a usage share; always paired with the printed figures. */

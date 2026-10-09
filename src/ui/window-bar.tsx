@@ -46,6 +46,8 @@ export function WindowBar({
   used,
   remaining,
   label,
+  pace,
+  bare = false,
 }: {
   /** used share of the window, 0..1; undefined when there is no split (balance meters) */
   fraction?: number;
@@ -54,6 +56,10 @@ export function WindowBar({
   remaining?: string;
   /** amount label, defaults to "used"; balance meters pass the balance label */
   label?: string;
+  /** share of the window's time already gone, 0..1: drawn as a tick where an even pace would be */
+  pace?: number;
+  /** the bar alone, for rows that print the figures themselves */
+  bare?: boolean;
 }) {
   const theme = useTheme();
   const t = useT();
@@ -74,18 +80,31 @@ export function WindowBar({
     );
   }
 
+  const track = (
+    <View
+      style={[styles.track, bare && styles.thin, { backgroundColor: theme.backgroundSelected }]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <Animated.View style={[styles.fill, { backgroundColor: color }, fillStyle]} />
+      {pace === undefined ? null : (
+        <View
+          style={[
+            styles.pace,
+            { left: `${Math.max(0, Math.min(1, pace)) * 100}%`, backgroundColor: theme.text },
+          ]}
+        />
+      )}
+    </View>
+  );
+  if (bare) return track;
+
   return (
     <View style={styles.row}>
       <ThemedText type="small" themeColor="textSecondary" style={styles.number}>
         {text} {used}
       </ThemedText>
-      <View
-        style={[styles.track, { backgroundColor: theme.backgroundSelected }]}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
-        <Animated.View style={[styles.fill, { backgroundColor: color }, fillStyle]} />
-      </View>
+      {track}
       {remaining === undefined ? null : (
         <ThemedText type="small" themeColor="textSecondary" style={styles.number}>
           {`${t('Remaining')} ${remaining}`}
@@ -104,5 +123,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     overflow: 'hidden',
   },
+  thin: { height: 6 },
   fill: { height: '100%', borderRadius: Radius.pill },
+  // translucent so it reads on both the empty track and the coloured fill
+  pace: { position: 'absolute', top: 0, bottom: 0, width: 2, marginLeft: -1, opacity: 0.45 },
 });
