@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
 import { formatPlan } from '@/core/format';
 import { visibleMeters } from '@/core/meter-utils';
 import { deriveStatus, type AccountView } from '@/data/summary';
@@ -11,7 +11,8 @@ import { renewalInfo } from '@/ui/meter-text';
 import { MeterRow } from '@/ui/meter-row';
 import { PressableScale } from '@/ui/motion';
 import { ProviderIcon } from '@/ui/provider-icon';
-import { StatusBadge, statusLabel } from '@/ui/status-badge';
+import { CodexResetChip } from '@/ui/codex-reset-chip';
+import { StatusBadge } from '@/ui/status-badge';
 
 export { forecastText, meterTitle, renewalInfo, resetText } from '@/ui/meter-text';
 
@@ -50,31 +51,36 @@ export function AccountCard({
       scaleTo={0.985}
     >
       <View style={styles.content}>
-        {/* One column keeps names, plans and status readable with large fonts. */}
+        {/* One header line; it wraps instead of truncating when large fonts need the room. */}
         <View style={styles.header}>
-          <ProviderIcon providerId={view.account.providerId} label={name} size={24} />
-          <ThemedText type="smallBold">{name}</ThemedText>
+          <ProviderIcon providerId={view.account.providerId} label={name} size={20} />
+          <ThemedText type="smallBold" numberOfLines={1} style={styles.shrink}>
+            {name}
+          </ThemedText>
           {subtitle ? (
-            <ThemedText type="small" themeColor="textSecondary">
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              numberOfLines={1}
+              style={styles.shrink}
+            >
               {subtitle}
             </ThemedText>
           ) : null}
-        </View>
-        {/* Secondary metadata follows the account name. */}
-        {renewal || statusLabel(status, now, t) ? (
-          <View style={styles.meta}>
-            <StatusBadge status={status} now={now} />
-            {renewal ? (
-              <ThemedText
-                type="small"
-                style={{ color: renewal.soon ? theme.warn : theme.textSecondary }}
-              >
-                {renewal.soon ? '▲ ' : ''}
-                {renewal.text}
-              </ThemedText>
+          <View style={styles.trailing}>
+            {view.account.providerId === 'codex' ? <CodexResetChip now={now} /> : null}
+            {/* the plan end shows here only when it is close; the details screen always has it */}
+            {renewal?.soon ? (
+              <View style={[styles.chip, { borderColor: theme.warn }]}>
+                <ThemedText type="small" style={{ color: theme.warn }}>
+                  {'▲ '}
+                  {renewal.left}
+                </ThemedText>
+              </View>
             ) : null}
+            <StatusBadge status={status} now={now} />
           </View>
-        ) : null}
+        </View>
 
         {meters.length > 0 ? (
           <View style={styles.meters}>
@@ -84,6 +90,7 @@ export function AccountCard({
                 meter={m}
                 now={now}
                 view={view}
+                compact
               />
             ))}
           </View>
@@ -104,15 +111,28 @@ export function AccountCard({
 }
 
 const styles = StyleSheet.create({
-  content: { gap: Spacing.three },
+  content: { gap: Spacing.two },
   header: {
-    alignItems: 'flex-start',
-    gap: Spacing.two,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    columnGap: Spacing.two,
+    rowGap: Spacing.one,
   },
-  meta: {
-    marginTop: -Spacing.two,
-    alignItems: 'flex-start',
-    gap: Spacing.two,
+  shrink: { flexShrink: 1 },
+  trailing: {
+    marginLeft: 'auto',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: Spacing.one,
   },
-  meters: { gap: Spacing.two },
+  chip: {
+    borderWidth: 1,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 1,
+  },
+  meters: { gap: Spacing.one },
 });

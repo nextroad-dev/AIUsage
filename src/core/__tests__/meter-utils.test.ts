@@ -1,6 +1,7 @@
 import {
   countdown,
   cycleKey,
+  elapsedFraction,
   level,
   mostConstrained,
   remaining,
@@ -79,5 +80,25 @@ describe('mostConstrained / cycleKey', () => {
     expect(cycleKey('acc', { ...pct('w', 1), scope: { type: 'model', name: 'opus' } })).toContain(
       ':opus:',
     );
+  });
+});
+
+describe('elapsedFraction', () => {
+  const now = new Date('2026-10-06T12:00:00Z');
+  it('places the pace tick by the known window length of shared meter ids', () => {
+    // 5-hour window resetting in 2 h: 3 of 5 hours gone
+    expect(elapsedFraction(pct('session', 10, '2026-10-06T14:00:00Z'), now)).toBeCloseTo(0.6);
+    // weekly window resetting in 3.5 days: half gone
+    expect(elapsedFraction(pct('weekly', 10, '2026-10-10T00:00:00Z'), now)).toBeCloseTo(0.5);
+    // calendar month: 10 Sep -> 10 Oct, 26 of 30 days gone
+    expect(elapsedFraction(pct('monthly', 10, '2026-10-10T12:00:00Z'), now)).toBeCloseTo(26 / 30);
+  });
+
+  it('draws nothing without a known window or a future reset', () => {
+    expect(elapsedFraction(pct('points', 10, '2026-10-07T00:00:00Z'), now)).toBeUndefined();
+    expect(elapsedFraction(pct('session', 10), now)).toBeUndefined();
+    expect(elapsedFraction(pct('session', 10, '2026-10-06T11:00:00Z'), now)).toBeUndefined();
+    // a reset further away than the window means the guess is wrong: no tick
+    expect(elapsedFraction(pct('session', 10, '2026-10-07T12:00:00Z'), now)).toBeUndefined();
   });
 });

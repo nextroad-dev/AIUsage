@@ -277,7 +277,12 @@ export default function AccountDetailScreen() {
         </Section>
       )}
 
-      {v.account.providerId === 'codex' ? <CodexResetSection now={now} /> : null}
+      {v.account.providerId === 'codex' ? (
+        <CodexResetSection
+          now={now}
+          weekly={meters.find((m) => m.id === 'weekly' && m.scope.type === 'overall')}
+        />
+      ) : null}
 
       <SubscriptionSection
         key={`${accountId}:${v.price?.amount ?? ''}:${v.price?.currency ?? ''}`}
