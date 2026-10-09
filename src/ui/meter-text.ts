@@ -7,7 +7,9 @@ import type { UsageLevel } from '@/core/meter-utils';
 import type { Translator } from '@/i18n';
 
 export function meterTitle(m: Meter, t: Translator): string {
-  return m.scope.type === 'model' ? `${t(m.label)} · ${m.scope.name}` : t(m.label);
+  return m.scope.type === 'model'
+    ? t('{label} ({detail})', { label: t(m.label), detail: m.scope.name })
+    : t(m.label);
 }
 
 export function resetText(m: Meter, now: Date, t: Translator): string | undefined {
@@ -44,16 +46,12 @@ export function renewalInfo(
   view: AccountView,
   now: Date,
   t: Translator,
-): { text: string; left: string; soon: boolean } | undefined {
+): { text: string; soon: boolean } | undefined {
   const at = view.snapshot?.renewsAt ? Date.parse(view.snapshot.renewsAt) : NaN;
   if (!Number.isFinite(at) || at < now.getTime()) return undefined;
   const days = daysUntil(at, now.getTime());
   const left = days <= 1 ? t('within a day') : t('{n} days left', { n: days });
-  return {
-    text: t('Plan until {date} · {left}', { date: formatDate(at), left }),
-    left: t('Plan ends · {left}', { left }),
-    soon: days <= 7,
-  };
+  return { text: t('Plan until {date} ({left})', { date: formatDate(at), left }), soon: days <= 7 };
 }
 
 /** Level colour for a usage share; always paired with the printed figures. */

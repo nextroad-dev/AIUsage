@@ -62,7 +62,8 @@ describe('AccountCard', () => {
     });
     await render(<AccountCard view={v} now={NOW} onPress={() => {}} />);
     expect(screen.getByText('GLM Coding Plan (z.ai)')).toBeTruthy();
-    expect(screen.getByText('Work · Pro')).toBeTruthy();
+    expect(screen.getByText('Work')).toBeTruthy();
+    expect(screen.getByText('Pro')).toBeTruthy();
     expect(screen.getByText(/5-hour window/)).toBeTruthy();
     expect(screen.getByText(/Weekly/)).toBeTruthy();
     // one line per window: used share and a short countdown; remaining is left to the details
@@ -156,7 +157,7 @@ describe('AccountCard', () => {
         onPress={onPress}
       />,
     );
-    expect(screen.getByText(/Weekly · opus/)).toBeTruthy();
+    expect(screen.getByText('Weekly (opus)')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button'));
     expect(onPress).toHaveBeenCalled();
   });
@@ -174,7 +175,7 @@ describe('AccountCard', () => {
           onPress={() => {}}
         />,
       );
-      expect(screen.getByText('3小时 12m后重置'.replace('12m', '12m'))).toBeTruthy();
+      expect(screen.getByText('3小时 12分后重置')).toBeTruthy();
       expect(screen.getByText(/只读/)).toBeTruthy();
     } finally {
       setLocale('en');
@@ -312,6 +313,7 @@ describe('AccountCard plan', () => {
         onPress={() => {}}
       />,
     );
-    expect(screen.getByText('Work · Plus')).toBeTruthy();
+    expect(screen.getByText('Work')).toBeTruthy();
+    expect(screen.getByText('Plus')).toBeTruthy();
   });
 });

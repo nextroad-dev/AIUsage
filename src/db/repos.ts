@@ -341,7 +341,7 @@ export class ManualStateRepo {
 // ---------------- alerts ----------------
 
 export type AlertKind =
-  'usage-over' | 'reset-soon-unused' | 'auth-expired' | 'window-reset' | 'renewal-soon';
+  'usage-over' | 'auth-expired' | 'window-reset' | 'renewal-soon' | 'early-reset';
 
 export interface AlertRule {
   id: string;
@@ -349,7 +349,7 @@ export interface AlertRule {
   meterId: string;
   model?: string;
   kind: AlertKind;
-  /** usage-over: fraction 0..1; reset-soon-unused: hours before reset */
+  /** usage-over: fraction 0..1 */
   threshold: number;
   enabled: boolean;
 }

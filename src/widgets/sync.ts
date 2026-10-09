@@ -16,7 +16,10 @@ const SHORT: Record<string, string> = {
 };
 
 function toWidgetMeter(m: Meter, t: typeof translate): WidgetMeter {
-  const label = m.scope.type === 'model' ? `${t(m.label)} · ${m.scope.name}` : t(m.label);
+  const label =
+    m.scope.type === 'model'
+      ? t('{label} ({detail})', { label: t(m.label), detail: m.scope.name })
+      : t(m.label);
   const reset = m.resetsAt ? Date.parse(m.resetsAt) : NaN;
   return {
     label,

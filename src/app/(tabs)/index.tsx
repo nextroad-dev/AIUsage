@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
+import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { Band } from '@/components/section';
@@ -7,20 +8,23 @@ import { Screen } from '@/components/screen';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { formatAmount, formatDate } from '@/core/format';
-import { nextRenewal, sortViews, subscriptionTotals } from '@/data/summary';
+import { formatAgo, formatAmount, formatDate } from '@/core/format';
+import { lastUpdated, nextRenewal, orderViews, subscriptionTotals } from '@/data/summary';
 import { useAccountViews, useNow, useRefreshAll, useServices } from '@/data/hooks';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/i18n';
 import { AccountCard } from '@/ui/account-card';
 import { AccountCardSkeleton } from '@/ui/account-card-skeleton';
 import { Button } from '@/ui/controls';
+import { HeaderButton } from '@/ui/header-button';
 import { RefreshButton } from '@/ui/refresh-button';
-import { UpdatePill } from '@/ui/update-pill';
-import { useUpdateNotice } from '@/data/update-check';
 import { summarizeCycle, type RefreshSummary } from '@/data/refresh-summary';
 import { haptics } from '@/ui/haptics';
 import { RefreshNotice } from '@/ui/refresh-notice';
+import { UpdateNotice } from '@/ui/update-notice';
+import { useUpdateNotice } from '@/data/update-check';
+import { ResetChanceLine } from '@/ui/reset-chance-line';
+import { useCodexResetPreference } from '@/data/codex-reset/preferences';
 import { enterFade, enterItem, exitFade, layoutShift } from '@/ui/motion';
 
 export default function OverviewScreen() {
@@ -28,6 +32,7 @@ export default function OverviewScreen() {
   const theme = useTheme();
   const t = useT();
   const now = useNow();
+  const resetOdds = useCodexResetPreference();
   const services = useServices();
   const views = useAccountViews();
   const refresh = useRefreshAll();
@@ -66,25 +71,40 @@ export default function OverviewScreen() {
     if (ready) mutate({});
   }, [ready, mutate]);
 
-  const list = sortViews(views.data ?? []);
+  // a stable order: problems first, then the user's order (not by usage, so cards don't jump)
+  const list = orderViews(views.data ?? []);
+  const updatedAt = lastUpdated(list);
   const totals = Object.entries(subscriptionTotals(list));
   const renewal = nextRenewal(list, now);
   const loading = views.isLoading && list.length === 0;
   const empty = list.length === 0 && !views.isLoading;
+  // Codex reset odds are global: under the only Codex card, or once below the summary when
+  // several Codex accounts would otherwise repeat them
+  const codexCount = list.filter((v) => v.account.providerId === 'codex').length;
+  const sharedOdds = codexCount > 1 && resetOdds.enabled;
 
   return (
     <Screen onRefresh={() => refreshNow('pull')} refreshing={pulling}>
       <ScreenHeader
         title={t('Usage')}
-        accessory={
-          update.notice ? (
-            <UpdatePill release={update.notice} onDismiss={update.dismiss} />
-          ) : undefined
+        subtitle={
+          updatedAt === undefined
+            ? undefined
+            : t('Updated {ago}', { ago: formatAgo(updatedAt, now.getTime(), t) })
         }
         action={
-          <RefreshButton refreshing={refresh.isPending} onPress={() => refreshNow('button')} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.one }}>
+            <HeaderButton
+              icon={{ ios: 'plus', android: 'add', web: 'add' }}
+              label={t('Add account')}
+              onPress={() => router.push('/add')}
+            />
+            <RefreshButton refreshing={refresh.isPending} onPress={() => refreshNow('button')} />
+          </View>
         }
       />
+
+      {update.notice ? <UpdateNotice release={update.notice} onDismiss={update.dismiss} /> : null}
 
       {notice ? <RefreshNotice summary={notice} onClose={closeNotice} /> : null}
 
@@ -97,7 +117,7 @@ export default function OverviewScreen() {
       ) : null}
 
       {/* the summary appears only with something to say: a priced plan or an upcoming plan end */}
-      {totals.length > 0 || renewal ? (
+      {totals.length > 0 || renewal || sharedOdds ? (
         <Band entering={enterFade} layout={layoutShift} style={{ gap: Spacing.one }}>
           {totals.length > 0 ? (
             <>
@@ -111,11 +131,17 @@ export default function OverviewScreen() {
           ) : null}
           {renewal ? (
             <ThemedText type="small" themeColor="textSecondary">
-              {t('Next plan end: {name} · {date}', {
+              {t('Next plan end: {name}, {date}', {
                 name: renewal.view.meta?.name ?? renewal.view.account.label,
                 date: formatDate(renewal.at),
               })}
             </ThemedText>
+          ) : null}
+          {/* one copy of the global odds for all Codex accounts, part of the summary */}
+          {sharedOdds ? (
+            <View style={totals.length > 0 || renewal ? { marginTop: Spacing.two } : undefined}>
+              <ResetChanceLine now={now} heading={t('Codex reset chance')} />
+            </View>
           ) : null}
         </Band>
       ) : null}
@@ -141,6 +167,11 @@ export default function OverviewScreen() {
                 view={v}
                 now={now}
                 onPress={() => router.push(`/account/${v.account.id}`)}
+                footer={
+                  codexCount === 1 && v.account.providerId === 'codex' ? (
+                    <ResetChanceLine now={now} />
+                  ) : undefined
+                }
               />
             </Animated.View>
           ))}

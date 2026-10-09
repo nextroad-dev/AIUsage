@@ -8,7 +8,7 @@ import { useServices } from '@/data/hooks';
  * Checked at most every few hours; the user can dismiss a version, and that version is never
  * offered again (a newer one is).
  */
-export const RELEASES_API = 'https://api.github.com/repos/nextroad-dev/aiusage/releases/latest';
+export const RELEASES_API = 'https://api.github.com/repos/nextroad-dev/AIUsage/releases/latest';
 const DISMISSED_KEY = 'update-dismissed-version';
 const CHECK_EVERY_MS = 6 * 3_600_000;
 

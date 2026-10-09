@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { Band, Section } from '@/components/section';
@@ -18,7 +18,7 @@ import {
   useNow,
   useRefreshAccount,
 } from '@/data/hooks';
-import { deriveStatus } from '@/data/summary';
+import { deriveStatus, type AccountView } from '@/data/summary';
 import { useT } from '@/i18n';
 import type { Price } from '@/data/prices';
 import { useTheme } from '@/hooks/use-theme';
@@ -30,11 +30,12 @@ import { unlimitedKeyHint } from '@/ui/relay-hints';
 import { RefreshButton } from '@/ui/refresh-button';
 import { RefreshNotice } from '@/ui/refresh-notice';
 import { summarizeOutcomes, type RefreshSummary } from '@/data/refresh-summary';
-import { enterFade, enterItem, exitFade, layoutShift } from '@/ui/motion';
+import { exitFade } from '@/ui/motion';
 import { ProviderIcon } from '@/ui/provider-icon';
 import { StatusBadge } from '@/ui/status-badge';
 import { CodexResetSection } from '@/ui/codex-reset-section';
 import { useRefreshCodexReset } from '@/data/codex-reset/hooks';
+import { Notice } from '@/ui/notice';
 
 const keyOf = (m: Meter) => `${m.id}:${m.scope.type === 'model' ? m.scope.name : ''}`;
 
@@ -89,10 +90,11 @@ function SubscriptionSection({
   return (
     <Section title={t('Subscription')}>
       {renewal ? (
-        <ThemedText type="small" style={{ color: renewal.soon ? theme.warn : theme.text }}>
-          {renewal.soon ? '▲ ' : ''}
-          {renewal.text}
-        </ThemedText>
+        renewal.soon ? (
+          <Notice color={theme.warn}>{renewal.text}</Notice>
+        ) : (
+          <ThemedText type="small">{renewal.text}</ThemedText>
+        )
       ) : null}
       <Field
         label={t('Monthly price')}
@@ -107,7 +109,7 @@ function SubscriptionSection({
       />
       {/* the currency belongs to the price: offered once there is a price to save it with */}
       {amount.trim() ? (
-        <Animated.View entering={enterFade} exiting={exitFade} style={{ gap: Spacing.two }}>
+        <Animated.View exiting={exitFade} style={{ gap: Spacing.two }}>
           <ThemedText type="small" themeColor="textSecondary">
             {t('Price currency')}
           </ThemedText>
@@ -126,6 +128,25 @@ function SubscriptionSection({
         </Animated.View>
       ) : null}
     </Section>
+  );
+}
+
+/** One line like the overview; a tap shows the full breakdown (used, remaining, exact reset). */
+function ExpandableMeter({ meter, now, view }: { meter: Meter; now: Date; view: AccountView }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ expanded: open }}
+      accessibilityHint={open ? t('Show less') : t('Show details')}
+      onPress={() => {
+        haptics.tap();
+        setOpen(!open);
+      }}
+    >
+      <MeterRow meter={meter} now={now} view={view} compact={!open} />
+    </Pressable>
   );
 }
 
@@ -215,7 +236,7 @@ export default function AccountDetailScreen() {
 
       {notice ? <RefreshNotice summary={notice} onClose={closeNotice} /> : null}
 
-      <Band entering={enterFade} layout={layoutShift}>
+      <Band>
         <View style={{ alignItems: 'flex-start', gap: Spacing.two }}>
           <ProviderIcon providerId={v.account.providerId} label={providerName} size={32} />
           <View style={{ flexShrink: 1 }}>
@@ -224,14 +245,18 @@ export default function AccountDetailScreen() {
               v.account.label !== providerName ? v.account.label : undefined,
               v.snapshot?.plan ? formatPlan(v.snapshot.plan) : v.account.manual?.planName,
             ].filter(Boolean).length > 0 ? (
-              <ThemedText type="small" themeColor="textSecondary">
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: Spacing.two }}>
                 {[
                   v.account.label !== providerName ? v.account.label : undefined,
                   v.snapshot?.plan ? formatPlan(v.snapshot.plan) : v.account.manual?.planName,
                 ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </ThemedText>
+                  .filter((x): x is string => !!x)
+                  .map((part) => (
+                    <ThemedText key={part} type="small" themeColor="textSecondary">
+                      {part}
+                    </ThemedText>
+                  ))}
+              </View>
             ) : null}
           </View>
         </View>
@@ -269,20 +294,11 @@ export default function AccountDetailScreen() {
               : undefined
           }
         >
-          {meters.map((m, i) => (
-            <Animated.View key={keyOf(m)} entering={enterItem(i)}>
-              <MeterRow meter={m} now={now} view={v} />
-            </Animated.View>
+          {meters.map((m) => (
+            <ExpandableMeter key={keyOf(m)} meter={m} now={now} view={v} />
           ))}
         </Section>
       )}
-
-      {v.account.providerId === 'codex' ? (
-        <CodexResetSection
-          now={now}
-          weekly={meters.find((m) => m.id === 'weekly' && m.scope.type === 'overall')}
-        />
-      ) : null}
 
       <SubscriptionSection
         key={`${accountId}:${v.price?.amount ?? ''}:${v.price?.currency ?? ''}`}
@@ -294,10 +310,12 @@ export default function AccountDetailScreen() {
         }}
       />
 
+      {v.account.providerId === 'codex' ? <CodexResetSection now={now} /> : null}
+
       {v.source === 'auto' && <AlertChoices accountId={accountId} meters={meters} />}
 
       {renaming ? (
-        <Band key="rename" entering={enterFade} exiting={exitFade} layout={layoutShift}>
+        <Band key="rename" exiting={exitFade}>
           <Field
             label={t('Name')}
             value={name}
@@ -311,7 +329,7 @@ export default function AccountDetailScreen() {
           <Button title={t('Cancel')} kind="secondary" onPress={() => setRenaming(false)} />
         </Band>
       ) : (
-        <Animated.View key="manage" entering={enterFade} exiting={exitFade} layout={layoutShift}>
+        <Animated.View key="manage" exiting={exitFade}>
           <Section title={t('Manage')}>
             <Button
               title={t('Rename')}
@@ -321,10 +339,14 @@ export default function AccountDetailScreen() {
                 setRenaming(true);
               }}
             />
-            <Button title={t('Remove account')} kind="destructive" onPress={confirmRemove} />
           </Section>
         </Animated.View>
       )}
+
+      {/* the destructive action stands apart from everything else, last on the page */}
+      <Section footer={t('Its credentials and usage history are deleted.')}>
+        <Button title={t('Remove account')} kind="destructive" onPress={confirmRemove} />
+      </Section>
     </Screen>
   );
 }

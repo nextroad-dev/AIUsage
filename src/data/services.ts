@@ -9,6 +9,7 @@ import { syncWidget } from '@/widgets/sync';
 import type { CycleDeps } from '@/refresh/coordinator';
 import type { RefreshDeps } from '@/refresh/refresh-account';
 import { CodexResetService } from '@/data/codex-reset/service';
+import { MOCK_DATA, mockFetch, syncMockAccounts } from '@/dev/mock-data';
 
 export interface Services {
   repos: Repos;
@@ -28,15 +29,20 @@ let cached: Promise<Services> | undefined;
 export function getServices(): Promise<Services> {
   cached ??= (async () => {
     const repos = await getRepos();
+    const real: typeof fetch = (...a) => fetch(...a);
+    // development builds can answer demo accounts from canned data (see src/dev/mock-data.ts)
+    const net = MOCK_DATA ? mockFetch(real) : real;
+    const accounts = new AccountService(repos, credentialStore);
+    if (__DEV__) await syncMockAccounts(accounts, repos);
     const refreshDeps: RefreshDeps = {
       repos,
       creds: credentialManager,
-      fetch: (...a) => fetch(...a),
+      fetch: net,
       now: () => new Date(),
     };
     const codexReset = new CodexResetService({
       store: repos.settings,
-      fetch: (...a) => fetch(...a),
+      fetch: net,
       now: () => Date.now(),
     });
     const refreshPublicData = async () => {
@@ -48,7 +54,7 @@ export function getServices(): Promise<Services> {
       repos,
       credentials: credentialStore,
       manager: credentialManager,
-      accounts: new AccountService(repos, credentialStore),
+      accounts,
       refreshDeps,
       cycleDeps: {
         ...refreshDeps,

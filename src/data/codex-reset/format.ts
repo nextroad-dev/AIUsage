@@ -1,5 +1,4 @@
 import { createTranslator, type Locale, type Translator } from '@/i18n';
-import { isConfirmedReset, type ResetEvent } from './models';
 import type { DataError } from './service';
 
 /** Intl defaults to the device's local timezone; never interpret a bare date as an event time. */
@@ -29,22 +28,6 @@ export function localEventTime(
   }).format(new Date(at));
 }
 
-export function confidenceText(value: string | null | undefined, t: Translator): string {
-  if (value === 'low') return t('Low confidence');
-  if (value === 'medium') return t('Medium confidence');
-  if (value === 'high') return t('High confidence');
-  return t('Confidence unknown');
-}
-
-export function eventText(event: ResetEvent, t: Translator): string {
-  if (isConfirmedReset(event)) return t('Confirmed reset');
-  if (event.group === 'reset') return t('Unconfirmed reset signal');
-  if (event.group === 'boost') return t('Usage boost announcement');
-  if (event.group === 'unlock') return t('Unlock announcement');
-  if (event.group === 'credits') return t('Credits / banked reset announcement');
-  return t('Other announcement');
-}
-
 export function errorText(error: DataError | undefined, t: Translator): string {
   if (error === 'rate-limited') return t('Codex Reset is rate limited. Retry later.');
   if (error === 'timeout') return t('Codex Reset request timed out.');
@@ -67,47 +50,4 @@ export function chanceBandText(band: ChanceBand | undefined, t: Translator): str
   if (band === 'possible') return t('Possible');
   if (band === 'low') return t('Low');
   return t('Unknown');
-}
-
-/** Confidence as filled dots out of three; undefined when the source gives no known level. */
-export function confidenceLevel(value: string | null | undefined): 1 | 2 | 3 | undefined {
-  if (value === 'low') return 1;
-  if (value === 'medium') return 2;
-  if (value === 'high') return 3;
-  return undefined;
-}
-
-/** Mean days between consecutive confirmed resets; needs at least two. */
-export function averageIntervalDays(confirmed: ResetEvent[]): number | undefined {
-  const times = confirmed
-    .map((e) => Date.parse(e.announced_at))
-    .filter(Number.isFinite)
-    .sort((a, b) => a - b);
-  if (times.length < 2) return undefined;
-  const span = times[times.length - 1] - times[0];
-  return Math.max(1, Math.round(span / (times.length - 1) / 86_400_000));
-}
-
-export type DayMark = 'confirmed' | 'signal' | undefined;
-
-/**
- * One mark per local calendar day, oldest first, ending today. A confirmed reset outranks an
- * unconfirmed reset signal on the same day; other announcement groups are not marked.
- */
-export function resetDays(events: ResetEvent[], now: Date, days = 30): DayMark[] {
-  const marks: DayMark[] = Array.from({ length: days }, () => undefined);
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  for (const e of events) {
-    if (e.group !== 'reset') continue;
-    const at = new Date(Date.parse(e.announced_at));
-    if (!Number.isFinite(at.getTime())) continue;
-    const day = new Date(at.getFullYear(), at.getMonth(), at.getDate()).getTime();
-    // calendar days, rounded so a daylight-saving shift does not drop a day
-    const back = Math.round((today - day) / 86_400_000);
-    if (back < 0 || back >= days) continue;
-    const i = days - 1 - back;
-    if (isConfirmedReset(e)) marks[i] = 'confirmed';
-    else if (marks[i] !== 'confirmed') marks[i] = 'signal';
-  }
-  return marks;
 }

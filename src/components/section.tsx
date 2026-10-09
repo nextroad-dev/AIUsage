@@ -4,7 +4,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { layoutShift, PressableScale } from '@/ui/motion';
+import { PressableScale } from '@/ui/motion';
 
 /**
  * Full-bleed grouping surface. Replaces cards: no radius, border or shadow — hierarchy comes
@@ -27,7 +27,8 @@ export function Band({
 
 /**
  * A titled group: optional label, one band, optional footnote. Screens compose these instead of
- * stacking cards. Sections glide to their new position when content above them grows or shrinks.
+ * stacking cards. No layout transition: when content above loads in or changes, sections move at
+ * once instead of sliding, so pages never look like they are still loading.
  */
 export function Section({
   title,
@@ -41,7 +42,7 @@ export function Section({
   children: ReactNode;
 }) {
   return (
-    <Animated.View style={styles.section} layout={layoutShift}>
+    <Animated.View style={styles.section}>
       {title ? (
         <ThemedText type="smallBold" themeColor="textSecondary">
           {title}

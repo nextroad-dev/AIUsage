@@ -1,4 +1,5 @@
 import { dispatchAlerts, type Notifier } from '@/alerts/dispatch';
+import { detectEarlyResets, EARLY_RESET_KEY, type WeeklySeen } from '@/alerts/early-reset';
 import { evaluateAlerts, mergeAlertSettings } from '@/alerts/evaluate';
 import { loadViews } from '@/data/load';
 import type { AccountView } from '@/data/summary';
@@ -45,7 +46,9 @@ async function maintenance(deps: CycleDeps): Promise<boolean> {
 async function doCycle(deps: CycleDeps, force: boolean): Promise<Omit<CycleResult, 'timedOut'>> {
   const { repos, now } = deps;
   const outcomes = await refreshAll(deps, { force });
-  void Promise.resolve().then(() => deps.refreshPublicData?.()).catch(() => {});
+  void Promise.resolve()
+    .then(() => deps.refreshPublicData?.())
+    .catch(() => {});
   const views = await loadViews(repos, now());
   const settings = mergeAlertSettings(await repos.settings.getJson('alerts', null));
   const events = evaluateAlerts({
@@ -54,6 +57,16 @@ async function doCycle(deps: CycleDeps, force: boolean): Promise<Omit<CycleResul
     overrides: await repos.alerts.rules(),
     now: now(),
   });
+  // early resets compare with the previous refresh, so the state is kept even with the setting off
+  const seen = await repos.settings.getJson<WeeklySeen>(EARLY_RESET_KEY, {}).catch(() => ({}));
+  const early = detectEarlyResets(
+    views,
+    seen ?? {},
+    now(),
+    settings.enabled && settings.earlyReset,
+  );
+  events.push(...early.events);
+  await repos.settings.setJson(EARLY_RESET_KEY, early.next).catch(() => {});
   const { sent } = await dispatchAlerts(events, {
     alerts: repos.alerts,
     notifier: deps.notifier,

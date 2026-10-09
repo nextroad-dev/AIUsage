@@ -11,20 +11,30 @@ import { Spacing } from '@/constants/theme';
  */
 export function ScreenHeader({
   title,
+  subtitle,
   accessory,
   action,
 }: {
   title: string;
+  /** one secondary line under the title, e.g. when the data was last updated */
+  subtitle?: string;
   accessory?: ReactNode;
   action?: ReactNode;
 }) {
   return (
     <View style={styles.header}>
-      <View style={styles.lead}>
-        <ThemedText type="subtitle" style={styles.title} numberOfLines={1}>
-          {title}
-        </ThemedText>
-        {accessory}
+      <View style={styles.text}>
+        <View style={styles.lead}>
+          <ThemedText type="subtitle" style={styles.title} numberOfLines={1}>
+            {title}
+          </ThemedText>
+          {accessory}
+        </View>
+        {subtitle ? (
+          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+            {subtitle}
+          </ThemedText>
+        ) : null}
       </View>
       {action}
     </View>
@@ -38,6 +48,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: Spacing.three,
   },
+  text: { flexShrink: 1 },
   lead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, flexShrink: 1 },
   title: { flexShrink: 1 },
 });
