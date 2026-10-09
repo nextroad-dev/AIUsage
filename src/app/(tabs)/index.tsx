@@ -21,6 +21,8 @@ import { RefreshButton } from '@/ui/refresh-button';
 import { summarizeCycle, type RefreshSummary } from '@/data/refresh-summary';
 import { haptics } from '@/ui/haptics';
 import { RefreshNotice } from '@/ui/refresh-notice';
+import { UpdateNotice } from '@/ui/update-notice';
+import { useUpdateNotice } from '@/data/update-check';
 import { ResetChanceLine } from '@/ui/reset-chance-line';
 import { useCodexResetPreference } from '@/data/codex-reset/preferences';
 import { enterFade, enterItem, exitFade, layoutShift } from '@/ui/motion';
@@ -34,6 +36,7 @@ export default function OverviewScreen() {
   const services = useServices();
   const views = useAccountViews();
   const refresh = useRefreshAll();
+  const update = useUpdateNotice();
   const [notice, setNotice] = useState<RefreshSummary>();
   // only a pull shows the pull spinner; the refresh on open and the header button have their own
   const [pulling, setPulling] = useState(false);
@@ -100,6 +103,8 @@ export default function OverviewScreen() {
           </View>
         }
       />
+
+      {update.notice ? <UpdateNotice release={update.notice} onDismiss={update.dismiss} /> : null}
 
       {notice ? <RefreshNotice summary={notice} onClose={closeNotice} /> : null}
 

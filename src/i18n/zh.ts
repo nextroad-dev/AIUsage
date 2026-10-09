@@ -105,6 +105,8 @@ export const zh: Record<string, string> = {
   'Open platforms': '开放平台',
   Relays: '中转站',
   Other: '其他',
+  'New version {version} available': '有新版本 v{version}，点击下载',
+  'Dismiss this version': '不再提示此版本',
   'Tip the author': '打赏作者',
   Afdian: '爱发电',
   Close: '关闭',
