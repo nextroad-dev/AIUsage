@@ -16,11 +16,19 @@ name: Android APK
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Existing v* tag to rebuild and publish (blank: build selected ref only)'
+        required: false
+        type: string
   push:
     tags: ['v*']
 
 permissions:
   contents: read
+
+env:
+  RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
 
 jobs:
   build:
@@ -30,6 +38,14 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
+          ref: ${{ inputs.release_tag || github.ref }}
+
+      - name: Validate release target
+        if: inputs.release_tag != ''
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          test "$(git rev-parse HEAD)" = "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
+          test "$RELEASE_TAG" = "v$(node -p "require('./app.json').expo.version")"
 
       - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
         with:
@@ -52,7 +68,10 @@ jobs:
       # the template signs this with its debug key; `sign` replaces that signature
       - name: Build the release APK
         working-directory: android
-        run: ./gradlew assembleRelease --no-daemon
+        # Three APK outputs share this JVM; the template heap can exhaust during packageRelease.
+        run: >-
+          ./gradlew assembleRelease --no-daemon --max-workers=2
+          '-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8'
 
       # plugins/with-abi-splits.js makes Gradle write one APK per CPU family plus a universal one
       - name: Name the APKs
@@ -133,7 +152,7 @@ jobs:
   # release notes = this version's changelog (.github/changes/<tag>.md) + the install guide
   release:
     needs: sign
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || startsWith(inputs.release_tag, 'v')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -143,6 +162,7 @@ jobs:
         with:
           persist-credentials: false
           sparse-checkout: .github
+          ref: ${{ inputs.release_tag || github.ref }}
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
@@ -152,8 +172,8 @@ jobs:
       - name: Compose release notes
         run: |
           {
-            if [ -f ".github/changes/${GITHUB_REF_NAME}.md" ]; then
-              cat ".github/changes/${GITHUB_REF_NAME}.md"
+            if [ -f ".github/changes/${RELEASE_TAG}.md" ]; then
+              cat ".github/changes/${RELEASE_TAG}.md"
               echo
             fi
             cat .github/release-notes.md
@@ -162,6 +182,7 @@ jobs:
       - name: Attach to the GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
-          name: AI Usage ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: AI Usage ${{ env.RELEASE_TAG }}
           body_path: ${{ runner.temp }}/release-notes.md
           files: dist/*.apk
