@@ -75,7 +75,8 @@
 - **OpenRouter** 浏览器授权会生成一个属于你的 API Key；查看整个账户余额需要 Management Key。
 - **中转站**：只需填写站点地址和 Key，点「智能识别」后自动判断程序类型（New API / Sub2API / One API / OpenAI 兼容）、读取站点名称和余额；之后刷新直接使用识别出的方式查询，失效时才重新识别。
 - **OpenAI / Anthropic 开放平台**需要组织的 Admin API Key（普通项目 Key 无权读取费用）；两家都不提供余额接口，因此显示花费。
-- **暂不支持**：Claude / Claude Code 订阅（Anthropic 条款不允许第三方读取用量）、Cursor、OpenCode Zen、MiniMax 与智谱 GLM 的开放平台按量余额（暂无公开的余额接口）、Google Antigravity（只能借用 Google 官方客户端的 OAuth 凭据登录）。
+- **Antigravity（实验性）**：已加入复用 PC OAuth 的浏览器登录与额度采集实现，需配置匹配的桌面客户端参数并重新构建原生应用；Android/iOS 真实登录尚未验证。配置与验收步骤见 [接入说明](ANTIGRAVITY.md)。
+- **暂不支持**：Claude / Claude Code 订阅（Anthropic 条款不允许第三方读取用量）、Cursor、OpenCode Zen、MiniMax 与智谱 GLM 的开放平台按量余额（暂无公开的余额接口）。
 
 > 部分服务的用量接口并非官方公开 API，服务商调整后可能暂时失效；遇到问题欢迎提 [Issue](https://github.com/nextroad-dev/aiusage/issues)。
 

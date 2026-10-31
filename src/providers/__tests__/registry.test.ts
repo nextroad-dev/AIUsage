@@ -6,6 +6,7 @@ import {
 } from '@/providers/registry';
 
 const active = [
+  'antigravity',
   'codex',
   'copilot',
   'kimi-code',
@@ -25,9 +26,9 @@ const active = [
 ];
 
 describe('OAuth/API-key-only provider registry', () => {
-  it('keeps 29 unique identities, including unsupported historical metadata', () => {
-    expect(providers).toHaveLength(29);
-    expect(new Set(providers.map((p) => p.id)).size).toBe(29);
+  it('keeps 30 unique identities, including unsupported historical metadata', () => {
+    expect(providers).toHaveLength(30);
+    expect(new Set(providers.map((p) => p.id)).size).toBe(30);
     for (const id of ['command-goat', 'deepseek', 'opencode', 'opencode-go', 'claude', 'cursor'])
       expect(providerById(id)).toBeDefined();
   });

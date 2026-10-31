@@ -6,9 +6,10 @@ import { beginCallbackWait } from '@/authkit/callback-session';
 import { LoopbackUnavailableError, startLoopback, stopLoopback } from '@/authkit/loopback';
 import type { Credential } from '@/core/types';
 
-export type BrowserProvider = 'codex' | 'openrouter';
+export type BrowserProvider = 'codex' | 'openrouter' | 'antigravity';
 
 export type BrowserAuthErrorCode =
+  | 'configuration-missing'
   | 'unavailable'
   | 'port-unavailable'
   | 'cancelled'

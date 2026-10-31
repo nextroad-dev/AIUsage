@@ -93,8 +93,9 @@ export async function validateCredential(
       kind: 'no-plugin',
       message: 'Automatic collection is not available for this provider.',
     };
-  const method = cred.type === 'oauth' ? 'deviceCode' : 'apiKey';
-  if (!supportsCredential(providerId, method, cred))
+  if (
+    !providerById(providerId)?.auth.some((method) => supportsCredential(providerId, method, cred))
+  )
     return {
       ok: false,
       kind: 'invalid-credential',

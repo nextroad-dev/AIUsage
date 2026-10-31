@@ -2,6 +2,13 @@
 // are translated at render time (registry notes, meter labels, service messages).
 // A test enforces coverage.
 export const zh: Record<string, string> = {
+  'Experimental desktop OAuth sign-in. Mobile compatibility is not verified.':
+    '实验性 PC OAuth 登录，手机兼容性尚未验证。',
+  'Antigravity OAuth client configuration is missing from this build.':
+    '此构建缺少 Antigravity OAuth 客户端配置。',
+  'Experimental: sign in to Google in the browser to read Antigravity quotas.':
+    '实验性功能：在浏览器登录 Google，读取 Antigravity 额度。',
+
   // notifications: short titles, the account in the body
   'Sign in again': '需要重新登录',
   '{name}: the login was rejected, usage cannot update.': '{name}：登录已失效，用量无法更新。',

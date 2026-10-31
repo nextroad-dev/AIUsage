@@ -1,6 +1,6 @@
 import { loopbackNativeModule } from '../../modules/usage-oauth-loopback';
 
-export type LoopbackProvider = 'codex' | 'openrouter';
+export type LoopbackProvider = 'codex' | 'openrouter' | 'antigravity';
 
 /** The native module is missing (Expo Go, or a build made before it was added). */
 export class LoopbackUnavailableError extends Error {

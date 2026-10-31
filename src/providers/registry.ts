@@ -1,5 +1,6 @@
 import type { AuthMethod, Credential, ProviderPlugin } from '@/core/types';
 import type { HttpProviderSpec } from '@/core/spec-engine';
+import { antigravityPlugin } from '@/providers/antigravity';
 import { clinePlugin } from '@/providers/cline';
 import { codexPlugin, codexSpec } from '@/providers/codex';
 import { copilotPlugin } from '@/providers/copilot';
@@ -9,7 +10,13 @@ import { specs } from '@/providers/specs';
 
 export type Automation = 'spec' | 'plugin' | 'unsupported';
 export type ConnectFlow =
-  'apiKey' | 'codexDevice' | 'codexBrowser' | 'githubDevice' | 'openrouterPkce' | 'relay';
+  | 'antigravityBrowser'
+  | 'apiKey'
+  | 'codexDevice'
+  | 'codexBrowser'
+  | 'githubDevice'
+  | 'openrouterPkce'
+  | 'relay';
 export type ConnectionAuth = Exclude<AuthMethod, 'manual' | 'webviewSession'>;
 
 export interface ProviderMeta {
@@ -31,6 +38,15 @@ const REGIONS = [
 
 // Unsupported metadata is retained for old account names, never as a connection option.
 export const providers: ProviderMeta[] = [
+  {
+    id: 'antigravity',
+    name: 'Google Antigravity',
+    automation: 'plugin',
+    auth: ['oauthPkce'],
+    plugin: antigravityPlugin(),
+    connect: 'antigravityBrowser',
+    note: 'Experimental desktop OAuth sign-in. Mobile compatibility is not verified.',
+  },
   {
     id: 'codex',
     name: 'ChatGPT / Codex',
@@ -222,7 +238,7 @@ export function supportsCredential(
   if (method === 'apiKey') return cred.type === 'apiKey' && !!cred.key.trim();
   if (method === 'oauthPkce') {
     // The two browser flows differ: OpenRouter issues an API key, Codex returns OAuth tokens.
-    return providerId === 'codex'
+    return providerId === 'codex' || providerId === 'antigravity'
       ? cred.type === 'oauth' && !!cred.accessToken.trim()
       : cred.type === 'apiKey' && !!cred.key.trim();
   }

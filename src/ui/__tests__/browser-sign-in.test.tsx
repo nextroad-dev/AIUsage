@@ -3,10 +3,12 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-
 import { BrowserAuthError, type BrowserAuthorization } from '@/authkit/browser-authorize';
 import { startCodexBrowserSignIn } from '@/providers/codex/browser';
 import { startOpenRouterSignIn } from '@/providers/openrouter/auth';
+import { startAntigravitySignIn } from '@/providers/antigravity/auth';
 import { BrowserSignInPanel } from '@/ui/browser-sign-in';
 
 jest.mock('@/providers/codex/browser', () => ({ startCodexBrowserSignIn: jest.fn() }));
 jest.mock('@/providers/openrouter/auth', () => ({ startOpenRouterSignIn: jest.fn() }));
+jest.mock('@/providers/antigravity/auth', () => ({ startAntigravitySignIn: jest.fn() }));
 
 const startCodex = jest.mocked(startCodexBrowserSignIn);
 const startOpenRouter = jest.mocked(startOpenRouterSignIn);
@@ -26,6 +28,18 @@ function session(
 beforeEach(() => jest.clearAllMocks());
 
 describe('browser sign-in panel', () => {
+  it('explains missing Antigravity configuration without saving a credential', async () => {
+    jest
+      .mocked(startAntigravitySignIn)
+      .mockRejectedValueOnce(new BrowserAuthError('configuration-missing'));
+    const onCredential = jest.fn();
+    await render(<BrowserSignInPanel provider="antigravity" onCredential={onCredential} />);
+    await fireEvent.press(screen.getByText('Sign in with browser'));
+    expect(
+      screen.getByText('Antigravity OAuth client configuration is missing from this build.'),
+    ).toBeTruthy();
+    expect(onCredential).not.toHaveBeenCalled();
+  });
   it('signs in through the system browser and hands over the credential once', async () => {
     const info = session({ type: 'oauth', accessToken: 'token' });
     startCodex.mockResolvedValueOnce(info);

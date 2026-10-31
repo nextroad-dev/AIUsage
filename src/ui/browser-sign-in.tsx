@@ -8,18 +8,21 @@ import { Spacing } from '@/constants/theme';
 import type { Credential } from '@/core/types';
 import { useTheme } from '@/hooks/use-theme';
 import { useT, type Translator } from '@/i18n';
+import { startAntigravitySignIn } from '@/providers/antigravity/auth';
 import { startCodexBrowserSignIn } from '@/providers/codex/browser';
 import { startOpenRouterSignIn } from '@/providers/openrouter/auth';
 import { Button } from '@/ui/controls';
 import { haptics } from '@/ui/haptics';
 import { enterFade, exitFade, layoutShift } from '@/ui/motion';
 
-export type BrowserSignInProvider = 'codex' | 'openrouter';
+export type BrowserSignInProvider = 'codex' | 'openrouter' | 'antigravity';
 
 type Phase = 'idle' | 'starting' | 'waiting' | 'connecting';
 
 function messageFor(error: unknown, t: Translator): string {
   if (error instanceof BrowserAuthError) {
+    if (error.code === 'configuration-missing')
+      return t('Antigravity OAuth client configuration is missing from this build.');
     if (error.code === 'unavailable')
       return t('Browser sign-in is not in this build. Install the current development build.');
     if (error.code === 'port-unavailable')
@@ -84,7 +87,11 @@ export function BrowserSignInPanel({
     setPhase('starting');
     try {
       const info =
-        provider === 'codex' ? await startCodexBrowserSignIn() : await startOpenRouterSignIn();
+        provider === 'antigravity'
+          ? await startAntigravitySignIn()
+          : provider === 'codex'
+            ? await startCodexBrowserSignIn()
+            : await startOpenRouterSignIn();
       if (id !== generation.current) {
         info.cancel();
         return;
@@ -112,11 +119,13 @@ export function BrowserSignInPanel({
   return (
     <View style={{ gap: Spacing.three }}>
       <ThemedText type="small" themeColor="textSecondary">
-        {provider === 'codex'
-          ? t('Sign in to ChatGPT in the browser; you come back here automatically.')
-          : t(
-              'Authorize in the browser and you come back here automatically. OpenRouter creates an API key stored in this device’s Keychain.',
-            )}
+        {provider === 'antigravity'
+          ? t('Experimental: sign in to Google in the browser to read Antigravity quotas.')
+          : provider === 'codex'
+            ? t('Sign in to ChatGPT in the browser; you come back here automatically.')
+            : t(
+                'Authorize in the browser and you come back here automatically. OpenRouter creates an API key stored in this device’s Keychain.',
+              )}
       </ThemedText>
       <Button
         title={t('Sign in with browser')}

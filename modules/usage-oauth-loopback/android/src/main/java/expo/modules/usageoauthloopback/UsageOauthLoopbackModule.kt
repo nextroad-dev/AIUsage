@@ -22,7 +22,7 @@ class UsageOauthLoopbackModule : Module() {
     Name("UsageOauthLoopback")
 
     AsyncFunction("start") { provider: String, port: Int, state: String ->
-      if ((provider != "codex" && provider != "openrouter") || port !in 1..65535 ||
+      if ((provider != "codex" && provider != "openrouter" && provider != "antigravity") || port !in 1..65535 ||
         !LoopbackServer.isValidState(state)
       ) {
         return@AsyncFunction mapOf("error" to "invalid-request")

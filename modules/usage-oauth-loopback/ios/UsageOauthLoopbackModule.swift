@@ -20,7 +20,7 @@ public final class UsageOauthLoopbackModule: Module {
     Name("UsageOauthLoopback")
 
     AsyncFunction("start") { (provider: String, port: Int, state: String, promise: Promise) in
-      guard (provider == "codex" || provider == "openrouter"), port > 0, port <= 65535,
+      guard (provider == "codex" || provider == "openrouter" || provider == "antigravity"), port > 0, port <= 65535,
         let candidate = UInt16(exactly: port), LoopbackServer.isValidState(state)
       else {
         promise.resolve(["error": "invalid-request"])

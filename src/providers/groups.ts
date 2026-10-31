@@ -12,6 +12,7 @@ export const PROVIDER_GROUPS: { key: string; title: string; ids: string[] }[] = 
     ids: [
       'codex',
       'copilot',
+      'antigravity',
       'cline',
       'kimi-code',
       'zai',

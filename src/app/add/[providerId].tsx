@@ -39,7 +39,9 @@ export default function AddProviderScreen() {
       ? 'codex'
       : meta?.connect === 'openrouterPkce'
         ? 'openrouter'
-        : undefined;
+        : meta?.connect === 'antigravityBrowser'
+          ? 'antigravity'
+          : undefined;
   // Browser sign-in needs the native loopback listener, which Expo Go and builds made before it was
   // added do not have. Codex then signs in with a device code instead; OpenRouter keeps its key.
   const [loopback] = useState(isLoopbackAvailable);
@@ -158,9 +160,11 @@ export default function AddProviderScreen() {
               ? t(
                   'Browser sign-in is not in this build, so a sign-in code is used instead. Install the current development build to sign in through the browser.',
                 )
-              : t(
-                  'Browser sign-in is not in this build. Use an API key, or install the current development build to sign in through the browser.',
-                )}
+              : browserProvider === 'antigravity'
+                ? t('Browser sign-in is not in this build. Install the current development build.')
+                : t(
+                    'Browser sign-in is not in this build. Use an API key, or install the current development build to sign in through the browser.',
+                  )}
           </ThemedText>
         </Band>
       )}
